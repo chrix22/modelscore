@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Benchmark Tracker</title>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --text: #0b0b0b;
+    --muted: #898781;
+    --border: rgba(11,11,11,0.10);
+    --card: #ffffff;
+    --blue: #2a78d6;
+    --blue-track: rgba(42,120,214,0.10);
+    --chip-bg: rgba(11,11,11,0.05);
+    --row-hover: rgba(11,11,11,0.03);
+    --shadow: 0 1px 2px rgba(11,11,11,0.04);
+  }
+  :root[data-theme="dark"] {
+    --surface: #1a1a19;
+    --text: #ffffff;
+    --muted: #9a988f;
+    --border: rgba(255,255,255,0.12);
+    --card: #232322;
+    --blue: #3987e5;
+    --blue-track: rgba(57,135,229,0.14);
+    --chip-bg: rgba(255,255,255,0.06);
+    --row-hover: rgba(255,255,255,0.04);
+    --shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --surface: #1a1a19;
+      --text: #ffffff;
+      --muted: #9a988f;
+      --border: rgba(255,255,255,0.12);
+      --card: #232322;
+      --blue: #3987e5;
+      --blue-track: rgba(57,135,229,0.14);
+      --chip-bg: rgba(255,255,255,0.06);
+      --row-hover: rgba(255,255,255,0.04);
+      --shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--surface);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { padding: 24px 16px 64px; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header.page-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .subtitle { color: var(--muted); font-size: 13px; }
+  .snapshot { font-variant-numeric: tabular-nums; }
+
+  button.theme-toggle, button.btn-secondary {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: var(--shadow);
+    font-family: inherit;
+  }
+  button.theme-toggle:hover, button.btn-secondary:hover { background: var(--row-hover); }
+  .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .section-label {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+
+  section { margin-bottom: 32px; }
+
+  /* Tabs */
+  .tabs-nav {
+    display: flex; gap: 4px; overflow-x: auto;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 550;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--blue); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 720px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+
+  .tile {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .tile .label { text-transform: uppercase; letter-spacing: 0.08em; font-size: 10.5px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+  .tile .value { font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .tile .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  /* Bar chart */
+  .chart-row {
+    display: grid;
+    grid-template-columns: 168px 1fr 44px;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+  }
+  .chart-row .name {
+    font-size: 12.5px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .chart-row .lab {
+    color: var(--muted); font-size: 10.5px; display: block;
+  }
+  .chart-track {
+    position: relative;
+    height: 16px;
+    background: var(--blue-track);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .chart-bar {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: var(--blue);
+    border-radius: 4px;
+  }
+  .chart-row .score {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--text);
+  }
+  .axis-caption { font-size: 10.5px; color: var(--muted); margin-top: 10px; text-align: right; }
+
+  /* Value ranking list */
+  .value-row {
+    display: grid;
+    grid-template-columns: 22px 1fr 70px;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .value-row:last-child { border-bottom: none; }
+  .value-rank { color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  .value-name { font-size: 12.5px; font-weight: 550; }
+  .value-lab { color: var(--muted); font-size: 10.5px; display: block; font-weight: 400; }
+  .value-score { text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--blue); font-weight: 600; }
+
+  /* Pareto chart */
+  .pareto-wrap { width: 100%; overflow-x: auto; }
+  .pareto-svg text { font-family: inherit; fill: var(--muted); font-size: 9.5px; }
+  .pareto-dot-frontier { fill: var(--blue); }
+  .pareto-dot-dominated { fill: var(--muted); opacity: 0.55; }
+  .pareto-axis-label { font-size: 10.5px; fill: var(--muted); }
+
+  /* Table */
+  .table-controls {
+    display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .table-controls input[type="text"] {
+    flex: 1; min-width: 180px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .table-controls select {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead th {
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 10.5px;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  thead th .arrow { opacity: 0.5; font-size: 9px; margin-left: 3px; }
+  tbody td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  tbody td.model-cell { white-space: normal; font-variant-numeric: normal; }
+  tbody tr:hover { background: var(--row-hover); }
+  .model-name { font-weight: 550; }
+  .num { text-align: right; }
+  .dash { color: var(--muted); }
+  .table-scroll { overflow-x: auto; }
+
+  /* Compare widget */
+  .compare-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .compare-controls select { flex: 1; min-width: 160px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+  .compare-vs { color: var(--muted); font-size: 12px; font-weight: 600; }
+  .compare-grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .compare-grid th { text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .compare-grid td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  .compare-grid td.win { color: var(--blue); font-weight: 650; }
+  .compare-grid tr:last-child td { border-bottom: none; }
+  .compare-label { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* Timeline */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item {
+    display: grid;
+    grid-template-columns: 96px auto 1fr;
+    gap: 14px;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tl-item:last-child { border-bottom: none; }
+  .tl-date { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tl-model { font-weight: 550; font-size: 13px; }
+  .tl-lab {
+    font-size: 10.5px;
+    color: var(--muted);
+    background: var(--chip-bg);
+    border-radius: 999px;
+    padding: 2px 9px;
+    white-space: nowrap;
+    justify-self: start;
+  }
+
+  /* Caveats */
+  ul.caveats { margin: 0; padding-left: 18px; }
+  ul.caveats li { margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
+  ul.caveats li:last-child { margin-bottom: 0; }
+  ul.caveats b { font-weight: 600; }
+
+  /* Disclosure section */
+  .disclosure-intro { font-size: 13px; line-height: 1.55; color: var(--text); margin: 0 0 16px; }
+  .disclosure-intro b { font-weight: 600; }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--chip-bg);
+    color: var(--text);
+    white-space: normal;
+  }
+  .tag-open { background: rgba(42,120,214,0.12); color: var(--blue); }
+  .tag-proprietary { background: var(--chip-bg); color: var(--muted); }
+  .weights-note { display: block; font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+  .foot-star { font-size: 10.5px; color: var(--muted); margin-top: 10px; }
+
+  /* Usage mini-list */
+  .usage-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  .usage-row:last-child { border-bottom: none; }
+  .usage-model { font-weight: 550; }
+  .usage-meta { color: var(--muted); font-size: 11.5px; }
+  .usage-tokens { font-variant-numeric: tabular-nums; text-align: right; }
+
+  /* History note */
+  .history-note { display: flex; gap: 14px; align-items: center; padding: 10px 0; }
+  .history-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
+
+  /* Sources */
+  .sources-list { columns: 2; column-gap: 32px; }
+  @media (max-width: 640px) { .sources-list { columns: 1; } }
+  .sources-list div { break-inside: avoid; margin-bottom: 8px; font-size: 12.5px; }
+  .sources-list a { color: var(--blue); text-decoration: none; }
+  .sources-list a:hover { text-decoration: underline; }
+  .src-note { font-size: 11px; color: var(--muted); display: block; }
+
+  footer.foot { text-align: center; color: var(--muted); font-size: 11.5px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div>
+      <h1>LLM Benchmark Tracker</h1>
+      <div class="subtitle">Snapshot date: <span class="snapshot">September 27, 2026</span></div>
+    </div>
+    <div class="head-actions">
+      <button class="btn-secondary" id="exportCsv">&#8595; Export CSV</button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark mode">
+        <span id="themeIcon">&#9789;</span> <span id="themeLabel">Dark mode</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="tabs-nav" id="tabsNav">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="compare">Model Comparison</button>
+    <button class="tab-btn" data-tab="releases">Recent Releases</button>
+    <button class="tab-btn" data-tab="governance">Governance &amp; Environment</button>
+    <button class="tab-btn" data-tab="adoption">Corporate Adoption</button>
+    <button class="tab-btn" data-tab="methodology">Methodology &amp; Sources</button>
+  </nav>
+
+  <!-- ================= OVERVIEW ================= -->
+  <div class="tab-panel active" id="panel-overview">
+
+    <section>
+      <div class="tiles">
+        <div class="tile">
+          <div class="label">Top Intelligence Index</div>
+          <div class="value">53</div>
+          <div class="meta">Claude Fable 5.1 &amp; GPT-6 Astra (tied, max effort) — Artificial Analysis</div>
+        </div>
+        <div class="tile">
+          <div class="label">Top SWE-bench Verified</div>
+          <div class="value">96%</div>
+          <div class="meta">Claude Opus 5 — Anthropic</div>
+        </div>
+        <div class="tile">
+          <div class="label">Top GPQA Diamond</div>
+          <div class="value">96.0%</div>
+          <div class="meta">GPT-6 Astra — OpenAI</div>
+        </div>
+        <div class="tile">
+          <div class="label">Cheapest Capable Model</div>
+          <div class="value">$0.22 / $0.66</div>
+          <div class="meta">DeepSeek-V4.1-Flash — 90.9% GPQA, $/1M in-out</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Artificial Analysis Intelligence Index — Top Models</div>
+      <div class="card">
+        <div id="chart"></div>
+        <div class="axis-caption">Axis scale: 0–65 · Artificial Analysis Intelligence Index (raw points, best reported effort tier per model)</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Best Value — Intelligence per Dollar</div>
+      <div class="card">
+        <p class="disclosure-intro">Computed from this dashboard's own data (not a third-party ranking): AA Intelligence Index divided by a blended $/1M-token price (weighted 3 input : 1 output, the usual approximation for a typical request). Only models with both an index score and confirmed pricing can be ranked — 9 of 19 this week.</p>
+        <div id="valueList"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Efficient Frontier — Intelligence vs. Price</div>
+      <div class="card">
+        <div class="pareto-wrap"><div id="pareto"></div></div>
+        <div class="axis-caption" id="paretoCaption"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Tracking History</div>
+      <div class="card">
+        <div id="historyNote"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ================= MODEL COMPARISON ================= -->
+  <div class="tab-panel" id="panel-compare">
+
+    <section>
+      <div class="section-label">Model Comparison</div>
+      <div class="card">
+        <div class="table-controls">
+          <input type="text" id="searchBox" placeholder="Filter by model or lab…">
+          <select id="labFilter">
+            <option value="">All labs</option>
+          </select>
+          <select id="weightsFilter">
+            <option value="">Open + proprietary</option>
+            <option value="Open">Open-weight only</option>
+            <option value="Proprietary">Proprietary only</option>
+          </select>
+        </div>
+        <div class="table-scroll">
+          <table id="modelTable">
+            <thead>
+              <tr>
+                <th data-key="model">Model<span class="arrow"></span></th>
+                <th data-key="lab">Lab<span class="arrow"></span></th>
+                <th data-key="weights">Weights<span class="arrow"></span></th>
+                <th data-key="index" class="num">AA Index<span class="arrow"></span></th>
+                <th data-key="elo" class="num">Arena Elo<span class="arrow"></span></th>
+                <th data-key="swe" class="num">SWE-bench Verified<span class="arrow"></span></th>
+                <th data-key="gpqa" class="num">GPQA<span class="arrow"></span></th>
+                <th data-key="speed" class="num">Speed (tok/s)<span class="arrow"></span></th>
+                <th data-key="context" class="num">Context<span class="arrow"></span></th>
+                <th data-key="priceIn" class="num">$/1M in<span class="arrow"></span></th>
+                <th data-key="priceOut" class="num">$/1M out<span class="arrow"></span></th>
+                <th data-key="costTask" class="num">Cost/Task<span class="arrow"></span></th>
+                <th data-key="spendShare" class="num">Enterprise Spend Share<span class="arrow"></span></th>
+                <th data-key="releasedSort">Released<span class="arrow"></span></th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Compare Two Models</div>
+      <div class="card">
+        <div class="compare-controls">
+          <select id="compareA"></select>
+          <span class="compare-vs">vs.</span>
+          <select id="compareB"></select>
+        </div>
+        <div class="table-scroll">
+          <table class="compare-grid" id="compareTable"></table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ================= RECENT RELEASES ================= -->
+  <div class="tab-panel" id="panel-releases">
+    <section>
+      <div class="section-label">Released in the Last 8 Weeks</div>
+      <div class="card">
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= GOVERNANCE ================= -->
+  <div class="tab-panel" id="panel-governance">
+    <section>
+      <div class="section-label">Lab Transparency &amp; Environmental Disclosure</div>
+      <div class="card">
+        <p class="disclosure-intro">
+          No public benchmark scores individual model <i>versions</i> (e.g. GPT-6 Astra vs. GPT-5.6 Sol) on ESG, environmental, or ethical-AI grounds the way the Model Comparison tab scores intelligence or coding &mdash; so this section is <b>per lab, not per model</b>, and the same rating applies to every model that lab ships. It combines three independent, differently-scoped, real sources rather than one invented "ESG score": Stanford HAI's <b>Foundation Model Transparency Index</b> (disclosure &amp; accountability practices), the <b>SINK Project</b> (environmental/sustainability performance from public data only, a newer rater we could not independently verify beyond its own methodology page &mdash; weight it below the academic FMTI), and the <b>EU AI Act's Article 51 systemic-risk presumption</b>: models trained above 10<sup>25</sup> FLOP are presumed "systemic risk" under the Act. As of Epoch AI's April 2026 compute report, OpenAI, Google, Anthropic and Meta are named as operating at that scale (obligations phase in through August 2026); we could not obtain a complete model-by-model registry, so this is a lab-level presumption, not a confirmed per-model designation. A dash means the lab simply hasn't been publicly assessed by that index &mdash; not that it scored zero.
+        </p>
+        <div class="table-scroll">
+          <table id="labTable">
+            <thead>
+              <tr>
+                <th>Lab</th>
+                <th class="num">FMTI Transparency /100 (Dec 2025)</th>
+                <th class="num">SINK Environmental /100</th>
+                <th>EU AI Act Art. 51</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="labTableBody"></tbody>
+          </table>
+        </div>
+        <div class="foot-star">* Exact numeric score not extractable from the available source excerpt; directional finding only &mdash; see the FMTI source for the primary figure.</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= CORPORATE ADOPTION ================= -->
+  <div class="tab-panel" id="panel-adoption">
+    <section>
+      <div class="section-label">Corporate Adoption</div>
+      <div class="card">
+        <p class="disclosure-intro">
+          Sourced from the <b>Ramp AI Index</b>, built from real corporate-card and token-spend transactions on Ramp's platform (not surveys or self-reported usage) &mdash; the closest thing to an independent "corporate penetration" figure for AI. It publishes two different metrics; don't conflate them. <b>Business adoption</b> (below) is lab-level: the share of U.S. businesses on Ramp with an active paid subscription to that lab. <b>Enterprise spend share</b>, in the Model Comparison tab, is model-level: each model's share of the dollars Ramp tracks flowing to AI token/subscription spend, published only for the models large enough to rank in Ramp's own top-10 that month &mdash; a blank cell there means "not in Ramp's tracked top 10," not zero. Ramp's customer base skews U.S., mid-market and tech-heavy, so treat this as a real but non-representative sample, not global market share.
+        </p>
+        <div class="tiles">
+          <div class="tile">
+            <div class="label">Anthropic</div>
+            <div class="value">43.8%</div>
+            <div class="meta">of U.S. Ramp businesses with a paid subscription (Sep 2026, +0.34pp MoM)</div>
+          </div>
+          <div class="tile">
+            <div class="label">OpenAI</div>
+            <div class="value">39.8%</div>
+            <div class="meta">of U.S. Ramp businesses with a paid subscription (Sep 2026, +0.09pp MoM)</div>
+          </div>
+          <div class="tile">
+            <div class="label">Frontier models' token share</div>
+            <div class="value">45%</div>
+            <div class="meta">Opus/Fable/Sol-class models' share of tracked token volume &mdash; down from a 53% August peak as cheaper standard models pick up share</div>
+          </div>
+          <div class="tile">
+            <div class="label">Open-weight adoption</div>
+            <div class="value">3.6%</div>
+            <div class="meta">of all Ramp businesses use open-weight models via routing platforms (likely understated per Ramp's own methodology note)</div>
+          </div>
+        </div>
+        <div class="foot-star">Other labs in this table (Google DeepMind, xAI, Alibaba, Z.AI, Moonshot AI, DeepSeek, StepFun, Meta, Shanghai AI Laboratory, InclusionAI) aren't broken out by name in Ramp's monthly public update, so no adoption figure is shown for them here &mdash; that's a reporting gap in the source, not a measured zero.</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Developer Usage — OpenRouter</div>
+      <div class="card">
+        <p class="disclosure-intro">A different lens on "adoption": OpenRouter measures actual API tokens routed across its platform (prompt + completion), skewing toward individual developers and smaller teams rather than Ramp's corporate-card SMB sample. Ranking is by raw token volume, which reflects usage, not quality &mdash; a verbose model processes more tokens for the same task. Only the models from this table that appear in OpenRouter's current top ranks are shown; the rest of OpenRouter's top 5 that week (Hy4 Preview, Space Bunny Alpha, GPT-5.6 Luna) aren't tracked elsewhere in this dashboard so aren't listed below.</p>
+        <div id="usageList"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= METHODOLOGY & SOURCES ================= -->
+  <div class="tab-panel" id="panel-methodology">
+    <section>
+      <div class="section-label">Read This Before Quoting the Numbers</div>
+      <div class="card">
+        <ul class="caveats">
+          <li><b>Artificial Analysis Intelligence Index — two trackers disagree, materially.</b> Fetched directly from artificialanalysis.ai, the top of the index is a near-tie between Claude Fable 5.1 and GPT-6 Astra (53 points each, max-effort configs), with GPT-5.6 Sol well back in 13th (47). BenchLM's mirror of the same benchmark (benchlm.ai/benchmarks/artificialanalysis) shows a completely different order and a different scale: GPT-5.6 Sol first at 58.9%, GPT-6 Astra fifth at 52.8%, and scores expressed as percentages rather than raw points. This isn't a rounding difference — it's a different ranking of the same models. We did not average the two. The chart and "Top Intelligence Index" tile use the direct artificialanalysis.ai figures; treat the BenchLM percentages as a separate, disagreeing read until one tracker corrects.</li>
+          <li><b>SWE-bench Verified coverage lags the newest releases.</b> The BenchLM SWE-bench Verified leaderboard tops out at Claude Opus 5 (96%), but several models released in the past three weeks — Claude Fable 5.1, GPT-6 Astra, Muse Spark 1.3, Gemini 3.8 Flash, GLM-5.3, Kimi K3, DeepSeek-V4.1-Flash — simply aren't on that leaderboard yet. Their SWE-bench Verified cells are blank (em dash), not zero; the tracker hasn't run them, not that they scored poorly.</li>
+          <li><b>SWE-bench Pro is not comparable to SWE-bench Verified, and its leaderboard looks stale.</b> Morph's SWE-bench Pro leaderboard shows a substantially harder task set — even the top model there (Claude Opus 4.5, 45.9%) scores far below Verified leaders — and, as of this snapshot, lists no model released after roughly Q2 2026. We're not plotting SWE-bench Pro numbers alongside Verified numbers because the two benchmarks aren't on the same scale and mixing them would misstate difficulty.</li>
+          <li><b>Pricing is blended vs. split-rate depending on source.</b> Artificial Analysis's own leaderboard reports "cost per task," not per-token input/output pricing. The $/1M in and $/1M out figures come from llm-stats.com's per-model pages instead; where we could not confirm a split rate (e.g. GPT-5.6 Sol, Step 5 Preview), the cells are left blank rather than guessed. The "blended price" used for the Best Value ranking and Efficient Frontier chart on the Overview tab is our own 3:1 input:output approximation of those same split rates — a modeling assumption, not a reported figure.</li>
+          <li><b>Effort-tier variants aren't separate models.</b> Artificial Analysis lists the same underlying model multiple times at different reasoning-effort settings (low/medium/high/xhigh/max), each with its own index score and cost. The chart and table collapse each model to its single best-reported effort tier to avoid double-counting; if you need the low-cost/low-effort variant's numbers specifically, go to the source.</li>
+          <li><b>Four columns added Sep 21–27, uneven coverage.</b> Weights, Arena Elo, Speed (tok/s), and Cost/Task were added over recent refreshes. Weights (open vs. proprietary) is confirmed for nearly every row; a few Chinese-lab entries are marked "not individually confirmed" because we're inferring from that lab's release pattern rather than a direct source, and Step 5 Preview is proprietary today with StepFun's own announcement promising open weights on Oct 15, 2026. Arena Elo comes from arena.ai's live text leaderboard and only covers the subset of models it currently ranks. Speed and Cost/Task are populated for only 5 of 19 models; repeated fetch failures on the source site prevented filling in the rest.</li>
+          <li><b>Agentic / tool-use benchmarks were evaluated and deliberately left out.</b> We checked BFCL v4 and τ³-bench, two real public agentic-tool-use leaderboards, as a candidate KPI. Neither is usable here: both leaderboards are dominated by small/niche models and are missing nearly every frontier model in this table, and τ³-bench's own page states "most rows are provider self-reports rather than independent verification." Forcing that data in would misrepresent frontier-model agentic ability rather than measure it, so we skipped it rather than publish numbers we don't trust.</li>
+          <li><b>Two different Ramp metrics look similar but aren't.</b> "Business adoption" (% of Ramp businesses paying a lab) and "spend share" (% of tracked AI dollars going to a lab or model) are separate measurements with separate figures — some secondary write-ups report the two under similar-sounding headlines with different numbers for the same lab in the same month. We used ramp.com's own September 2026 index page for the lab-level figures and a source citing Ramp's per-model spend breakdown for Enterprise Spend Share; we did not average or reconcile them. Only 5 of 19 models have a spend-share figure, because Ramp itself only publishes a top-10 ranking each month.</li>
+          <li><b>OpenRouter usage measures volume, not quality — and it's a third, different metric again.</b> It's neither "who's paying" (Ramp) nor "who scores best" (AA Index) but "how many tokens got routed," which rewards verbose models and heavy automated/batch usage alongside genuine popularity. We list it separately and don't merge it into the Enterprise Spend Share column.</li>
+          <li><b>The EU AI Act systemic-risk flag is a lab-level presumption, not a confirmed model registry.</b> We could not find a public, complete list of the specific model versions formally designated under Article 51 — only a secondary source naming the labs (OpenAI, Google, Anthropic, Meta) reported by Epoch AI to have crossed the 10<sup>25</sup> FLOP compute threshold as of April 2026. Treat the "Presumed in-scope" tag in Governance as directional, not a legal determination.</li>
+          <li><b>The Best Value ranking and Efficient Frontier chart are our own calculations, not a cited third-party metric.</b> Both divide the AA Index by a 3:1-weighted blended price we compute from the $/1M columns. They only include the 9 of 19 models with both an index score and confirmed split pricing — narrower coverage than the main table.</li>
+          <li><b>Tracking history is one snapshot deep.</b> Week-over-week deltas started this refresh cycle; a real trend line needs several more weekly snapshots to be meaningful. See the Tracking History card on the Overview tab.</li>
+          <li><b>There is no per-model ESG, green, or ethics score — anywhere.</b> We looked. No tracker rates individual model versions on environmental or ethical grounds the way Artificial Analysis rates intelligence. The Governance tab substitutes real, cited, company-level ratings rather than an invented per-model number. Treat SINK's scores as lower-confidence than FMTI's; several labs aren't assessed by either index, and a handful of FMTI's exact company scores couldn't be extracted from the source excerpt — those are shown as directional findings (marked *) rather than numbers we didn't actually see.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Sources</div>
+      <div class="card">
+        <div class="sources-list" id="sourcesList"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="foot">Built from publicly available benchmark trackers. Figures change frequently — always confirm against the primary source before citing.</footer>
+
+</div>
+
+<script>
+// ---------- Data ----------
+const models = [
+  { model: "Claude Fable 5.1", lab: "Anthropic", index: 53, swe: null, gpqa: null, context: 1000000, priceIn: 10.00, priceOut: 50.00, released: "2026-09-01", weights: "Proprietary", speed: 258.64, costTask: 7.63, elo: 1498, spendShare: 6.6 },
+  { model: "GPT-6 Astra", lab: "OpenAI", index: 53, swe: null, gpqa: 96.0, context: 1100000, priceIn: 10.00, priceOut: 50.00, released: "2026-09-04", weights: "Proprietary", speed: 69.25, costTask: 3.26, elo: 1480, spendShare: 18.9 },
+  { model: "Claude Opus 5", lab: "Anthropic", index: 51, swe: 96.0, gpqa: null, context: 1000000, priceIn: 5.00, priceOut: 25.00, released: "2026-07-24", weights: "Proprietary", speed: 61.68, costTask: 5.86, elo: 1487, spendShare: 17.1 },
+  { model: "Muse Spark 1.3", lab: "Meta", index: 48, swe: null, gpqa: null, context: 1000000, priceIn: 1.25, priceOut: 4.25, released: "2026-09-02", weights: "Proprietary", speed: 24.12, costTask: 1.60, elo: 1493, spendShare: null },
+  { model: "GPT-5.6 Sol", lab: "OpenAI", index: 47, swe: null, gpqa: 94.6, context: 1100000, priceIn: null, priceOut: null, released: null, weights: "Proprietary", speed: 73.20, costTask: 1.99, elo: 1483, spendShare: 11.3 },
+  { model: "Qwen3.8 Max", lab: "Alibaba", index: 45, swe: null, gpqa: 92.6, context: 1000000, priceIn: 1.65, priceOut: 4.95, released: "2026-08-02", weights: "Open", speed: null, costTask: null, elo: 1481 },
+  { model: "GLM-5.3", lab: "Z.AI", index: 45, swe: null, gpqa: null, context: 1000000, priceIn: 1.20, priceOut: 4.00, released: "2026-08-14", weights: "Open", speed: null, costTask: null, elo: 1483 },
+  { model: "Grok 4.6", lab: "xAI", index: 44, swe: null, gpqa: null, context: 500000, priceIn: 2.00, priceOut: 6.00, released: "2026-08-12", weights: "Proprietary", speed: null, costTask: null, elo: null },
+  { model: "Step 5 Preview", lab: "StepFun", index: 44, swe: null, gpqa: null, context: null, priceIn: null, priceOut: null, released: null, weights: "Proprietary", weightsNote: "open weights promised Oct 15, 2026", speed: null, costTask: null, elo: null },
+  { model: "Kimi K3", lab: "Moonshot AI", index: 44, swe: null, gpqa: 93.5, context: 1000000, priceIn: 2.85, priceOut: 14.25, released: "2026-07-16", weights: "Open", speed: null, costTask: null, elo: 1485 },
+  { model: "GPT-5.6 Terra", lab: "OpenAI", index: 42, swe: null, gpqa: 92.9, context: null, priceIn: null, priceOut: null, released: null, weights: "Proprietary", speed: null, costTask: null, elo: null, spendShare: 2.9 },
+  { model: "GLM-5.3-Flash", lab: "Z.AI", index: 42, swe: null, gpqa: null, context: null, priceIn: null, priceOut: null, released: null, weights: "Open", speed: null, costTask: null, elo: 1475 },
+  { model: "Gemini 3.8 Flash", lab: "Google DeepMind", index: 41, swe: null, gpqa: null, context: 1000000, priceIn: 0.75, priceOut: 3.75, released: "2026-09-02", weights: "Proprietary", speed: null, costTask: null, elo: 1493 },
+  { model: "Qwen3.8 2.4T A95B", lab: "Alibaba", index: 40, swe: null, gpqa: null, context: null, priceIn: null, priceOut: null, released: null, weights: "Open", speed: null, costTask: null, elo: null },
+  { model: "DeepSeek-V4 Pro 0813", lab: "DeepSeek", index: null, swe: 80.6, gpqa: null, context: 1000000, priceIn: 0.435, priceOut: 0.870, released: "2026-08-13", weights: "Open", speed: null, costTask: null, elo: null },
+  { model: "DeepSeek-V4.1-Flash", lab: "DeepSeek", index: null, swe: null, gpqa: 90.9, context: 1000000, priceIn: 0.22, priceOut: 0.66, released: "2026-09-10", weights: "Open", speed: null, costTask: null, elo: null },
+  { model: "Kimi K2.8 Preview", lab: "Moonshot AI", index: null, swe: null, gpqa: null, context: 1000000, priceIn: null, priceOut: null, released: "2026-09-11", weights: "Open", weightsNote: "K-series pattern, not individually confirmed", speed: null, costTask: null, elo: null },
+  { model: "Atria Dawn Preview", lab: "Shanghai AI Laboratory", index: null, swe: null, gpqa: null, context: null, priceIn: null, priceOut: null, released: "2026-09-11", weights: "Open", speed: null, costTask: null, elo: null },
+  { model: "Ling 3.0 Flash Fin", lab: "InclusionAI", index: null, swe: null, gpqa: null, context: null, priceIn: null, priceOut: null, released: "2026-09-03", weights: "Open", weightsNote: "InclusionAI family pattern, not individually confirmed", speed: null, costTask: null, elo: null },
+];
+
+const timelineEvents = [
+  { date: "2026-09-11", model: "Kimi K2.8 Preview", lab: "Moonshot AI" },
+  { date: "2026-09-11", model: "Atria Dawn Preview", lab: "Shanghai AI Laboratory" },
+  { date: "2026-09-10", model: "DeepSeek-V4.1-Flash", lab: "DeepSeek" },
+  { date: "2026-09-04", model: "GPT-6 Astra", lab: "OpenAI" },
+  { date: "2026-09-03", model: "Ling 3.0 Flash Fin", lab: "InclusionAI" },
+  { date: "2026-09-02", model: "Gemini 3.8 Flash / Flash Cyber", lab: "Google DeepMind" },
+  { date: "2026-09-02", model: "Muse Spark 1.3", lab: "Meta" },
+  { date: "2026-09-01", model: "Claude Fable 5.1 / Mythos 5.1", lab: "Anthropic" },
+  { date: "2026-08-14", model: "GLM-5.3", lab: "Z.AI" },
+  { date: "2026-08-13", model: "DeepSeek-V4 Pro 0813", lab: "DeepSeek" },
+  { date: "2026-08-12", model: "Grok 4.6", lab: "xAI" },
+];
+
+const sources = [
+  { title: "Artificial Analysis — LLM Leaderboard (models)", url: "https://artificialanalysis.ai/leaderboards/models" },
+  { title: "Artificial Analysis — Intelligence Index evaluation page", url: "https://artificialanalysis.ai/evaluations/artificial-analysis-intelligence-index" },
+  { title: "Artificial Analysis — Claude Fable 5.1 model page", url: "https://artificialanalysis.ai/models/claude-fable-5-1" },
+  { title: "BenchLM — Artificial Analysis mirror", url: "https://benchlm.ai/benchmarks/artificialanalysis" },
+  { title: "BenchLM — SWE-bench Verified leaderboard", url: "https://benchlm.ai/benchmarks/sweVerified" },
+  { title: "Morph — SWE-bench Pro leaderboard", url: "https://www.morphllm.com/swe-bench-pro" },
+  { title: "llm-stats.com — LLM leaderboard", url: "https://llm-stats.com/leaderboards/llm-leaderboard" },
+  { title: "llm-stats.com — GPQA Diamond leaderboard", url: "https://llm-stats.com/benchmarks/gpqa-diamond" },
+  { title: "llm-stats.com — LLM updates feed", url: "https://llm-stats.com/llm-updates" },
+  { title: "llm-stats.com — GPT-6 Astra", url: "https://llm-stats.com/models/gpt-6-astra" },
+  { title: "llm-stats.com — Claude Opus 5", url: "https://llm-stats.com/models/claude-opus-5" },
+  { title: "llm-stats.com — Muse Spark 1.3", url: "https://llm-stats.com/models/muse-spark-1.3" },
+  { title: "llm-stats.com — DeepSeek-V4.1-Flash", url: "https://llm-stats.com/models/deepseek-v4.1-flash" },
+  { title: "llm-stats.com — Qwen3.8 Max", url: "https://llm-stats.com/models/qwen3.8-max" },
+  { title: "llm-stats.com — Grok 4.6", url: "https://llm-stats.com/models/grok-4.6" },
+  { title: "llm-stats.com — Gemini 3.8 Flash", url: "https://llm-stats.com/models/gemini-3.8-flash" },
+  { title: "llm-stats.com — Kimi K3", url: "https://llm-stats.com/models/kimi-k3" },
+  { title: "llm-stats.com — GLM-5.3", url: "https://llm-stats.com/models/glm-5.3" },
+  { title: "llm-stats.com — DeepSeek-V4 Pro 0813", url: "https://llm-stats.com/models/deepseek-v4-pro-0813" },
+  { title: "OpenAI — GPT-6 Astra announcement", url: "https://openai.com/index/gpt-6-astra/" },
+  { title: "Anthropic — Introducing Claude Fable 5.1 and Mythos 5.1", url: "https://www.anthropic.com/claude-fable-and-mythos-5-1" },
+  { title: "Google DeepMind — Gemini 3.8 Flash model page", url: "https://deepmind.google/models/gemini/flash/" },
+  { title: "Meta AI Research — Introducing Muse Spark 1.3", url: "https://research.meta.ai/blog/introducing-muse-spark-1-3" },
+  { title: "DeepSeek — Introducing DeepSeek-V4.1-Flash", url: "https://www.deepseek.com/en/news/deepseek-v4-1-flash/" },
+  { title: "Stanford HAI/CRFM — Foundation Model Transparency Index, December 2025", url: "https://crfm.stanford.edu/fmti/December-2025" },
+  { title: "SINK Project — Anthropic sustainability rating", url: "https://www.sinkproject.com/company/anthropic" },
+  { title: "SINK Project — OpenAI sustainability rating", url: "https://www.sinkproject.com/company/openai" },
+  { title: "Arena.ai — Text Arena leaderboard (Elo)", url: "https://arena.ai/leaderboard/text" },
+  { title: "Hugging Face — Qwen3.8-2.4T-A95B (open weights)", url: "https://huggingface.co/Qwen/Qwen3.8-2.4T-A95B" },
+  { title: "MarkTechPost — StepFun Step 5 Preview (open weights planned Oct 15, 2026)", url: "https://www.marktechpost.com/2026/09/20/stepfun-launches-step-5-preview/" },
+  { title: "BenchLM — BFCL v4 (function-calling) leaderboard — checked, not used; see caveats", url: "https://benchlm.ai/benchmarks/bfcl-v4" },
+  { title: "BenchLM — τ³-bench (agentic tool-use) leaderboard — checked, not used; see caveats", url: "https://benchlm.ai/benchmarks/tau3-bench" },
+  { title: "Ramp — AI Index, September 2026 update", url: "https://ramp.com/data/ai-index-sept-2026" },
+  { title: "OfficeChai — AI models ranked by Ramp customer token spend", url: "https://officechai.com/ai/these-are-the-ai-models-with-the-most-customer-spend-as-per-ramp/" },
+  { title: "OpenRouter — Model rankings by token usage", url: "https://openrouter.ai/rankings" },
+  { title: "TechJack Solutions — EU AI Act systemic-risk models in scope (citing Epoch AI, Apr 2026)", url: "https://techjacksolutions.com/ai-brief/eu-ai-act-systemic-risk-what-the-12-models-now-in-scope-actu/" },
+  { title: "EU Digital Strategy — Signatory Taskforce of the GPAI Code of Practice", url: "https://digital-strategy.ec.europa.eu/en/policies/signatory-taskforce-gpai-code-practice" },
+];
+
+// ---------- Lab-level transparency & environmental disclosure ----------
+const labDisclosure = [
+  { lab: "Anthropic", fmti: "Top tier*", sink: 31, euAct: true, note: "FMTI: among the highest-scoring developers, improved vs. 2023. SINK: ranked 51st of 58 SaaS firms; cites no public emissions disclosure despite large compute footprint." },
+  { lab: "OpenAI", fmti: "Below average*", sink: 25, euAct: true, note: "FMTI: score declined significantly vs. 2023. SINK: lowest-scored SaaS company assessed (58th of 58); zero disclosed Scope 1/2/3 emissions data." },
+  { lab: "Meta", fmti: "Below average*", sink: null, euAct: true, note: "FMTI: score declined significantly vs. 2023. SINK: not yet assessed as of this snapshot." },
+  { lab: "Google DeepMind", fmti: "Assessed*", sink: 42, euAct: true, note: "FMTI: included in the Dec 2025 index; exact figure not extractable from source excerpt. SINK score is for parent company Alphabet." },
+  { lab: "Alibaba", fmti: 26, sink: null, euAct: null, note: "" },
+  { lab: "xAI", fmti: 14, sink: null, euAct: null, note: "Tied for lowest score (with Midjourney) in the Dec 2025 FMTI." },
+  { lab: "DeepSeek", fmti: 32, sink: null, euAct: null, note: "" },
+  { lab: "Moonshot AI", fmti: null, sink: null, euAct: null, note: "Not assessed by either index as of this snapshot." },
+  { lab: "Z.AI", fmti: null, sink: null, euAct: null, note: "Not assessed by either index as of this snapshot." },
+  { lab: "StepFun", fmti: null, sink: null, euAct: null, note: "Not assessed by either index as of this snapshot." },
+  { lab: "Shanghai AI Laboratory", fmti: null, sink: null, euAct: null, note: "Not assessed by either index as of this snapshot." },
+  { lab: "InclusionAI", fmti: null, sink: null, euAct: null, note: "Not assessed by either index as of this snapshot." },
+];
+
+// ---------- Developer usage (OpenRouter) ----------
+const usageTop = [
+  { model: "DeepSeek-V4.1-Flash", lab: "DeepSeek", rank: 1, tokens: "18.6T tokens this week", change: "+28% WoW" },
+  { model: "GLM-5.3-Flash", lab: "Z.AI", rank: 2, tokens: "17.8T tokens this week", change: "+37% WoW" },
+];
+
+// ---------- Tracking history (grows week over week) ----------
+const history = [
+  { date: "2026-09-27", topIndex: "53 — Claude Fable 5.1 & GPT-6 Astra (tied)", topSwe: "96% — Claude Opus 5", topGpqa: "96.0% — GPT-6 Astra", cheapest: "DeepSeek-V4.1-Flash ($0.22 / $0.66)" },
+];
+
+// ---------- Theme ----------
+const root = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const themeLabel = document.getElementById('themeLabel');
+function applyThemeLabel() {
+  const isDark = root.getAttribute('data-theme') === 'dark' ||
+    (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  themeIcon.innerHTML = isDark ? '&#9728;' : '&#9789;';
+  themeLabel.textContent = isDark ? 'Light mode' : 'Dark mode';
+}
+themeToggle.addEventListener('click', () => {
+  const current = root.getAttribute('data-theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+  applyThemeLabel();
+});
+applyThemeLabel();
+
+// ---------- Tabs ----------
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabPanels = document.querySelectorAll('.tab-panel');
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    tabPanels.forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ---------- Formatting helpers ----------
+function fmtNum(v, suffix) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  return (Number.isInteger(v) ? v : v.toFixed(2)) + (suffix || '');
+}
+function fmtPct(v) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  return v.toFixed(1).replace(/\.0$/, '') + '%';
+}
+function fmtPrice(v) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  return '$' + v.toFixed(2);
+}
+function fmtContext(v) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  if (v >= 1000000) return (v / 1000000).toFixed(v % 1000000 === 0 ? 0 : 1) + 'M';
+  return Math.round(v / 1000) + 'K';
+}
+function fmtSpeed(v) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  return v.toFixed(1);
+}
+function fmtElo(v) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  return Math.round(v);
+}
+function fmtWeights(v, note) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  const cls = v.startsWith('Open') ? 'tag tag-open' : 'tag tag-proprietary';
+  const tag = `<span class="${cls}">${v}</span>`;
+  return note ? `${tag}<span class="weights-note">${note}</span>` : tag;
+}
+function fmtDate(iso) {
+  if (!iso) return '<span class="dash">—</span>';
+  const d = new Date(iso + 'T00:00:00Z');
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+function fmtTlDate(iso) {
+  const d = new Date(iso + 'T00:00:00Z');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+function blendedPrice(m) {
+  if (m.priceIn === null || m.priceIn === undefined || m.priceOut === null || m.priceOut === undefined) return null;
+  return m.priceIn * 0.75 + m.priceOut * 0.25;
+}
+
+// ---------- Chart ----------
+const AXIS_MAX = 65;
+const chartEl = document.getElementById('chart');
+const chartModels = models
+  .filter(m => m.index !== null)
+  .sort((a, b) => b.index - a.index)
+  .slice(0, 22);
+chartModels.forEach(m => {
+  const row = document.createElement('div');
+  row.className = 'chart-row';
+  const pct = Math.max(2, (m.index / AXIS_MAX) * 100);
+  row.innerHTML = `
+    <div class="name">${m.model}<span class="lab">${m.lab}</span></div>
+    <div class="chart-track"><div class="chart-bar" style="width:${pct}%"></div></div>
+    <div class="score">${m.index}</div>
+  `;
+  chartEl.appendChild(row);
+});
+
+// ---------- Best value ranking ----------
+const valueListEl = document.getElementById('valueList');
+const valuable = models
+  .map(m => ({ ...m, blended: blendedPrice(m) }))
+  .filter(m => m.index !== null && m.blended !== null && m.blended > 0)
+  .map(m => ({ ...m, value: m.index / m.blended }))
+  .sort((a, b) => b.value - a.value);
+valuable.forEach((m, i) => {
+  const row = document.createElement('div');
+  row.className = 'value-row';
+  row.innerHTML = `
+    <div class="value-rank">${i + 1}</div>
+    <div class="value-name">${m.model}<span class="value-lab">${m.lab} · index ${m.index} at ~$${m.blended.toFixed(2)}/1M blended</span></div>
+    <div class="value-score">${m.value.toFixed(1)}</div>
+  `;
+  valueListEl.appendChild(row);
+});
+
+// ---------- Pareto / efficient frontier ----------
+const paretoEl = document.getElementById('pareto');
+const paretoCaption = document.getElementById('paretoCaption');
+const paretoData = models
+  .map(m => ({ ...m, blended: blendedPrice(m) }))
+  .filter(m => m.index !== null && m.blended !== null);
+paretoData.forEach(m => {
+  m.dominated = paretoData.some(o => o !== m && o.index >= m.index && o.blended <= m.blended && (o.index > m.index || o.blended < m.blended));
+});
+(function drawPareto() {
+  const W = 640, H = 300, padL = 42, padR = 16, padT = 16, padB = 34;
+  const xs = paretoData.map(m => m.blended);
+  const ys = paretoData.map(m => m.index);
+  const xMax = Math.max(...xs) * 1.12;
+  const yMin = Math.min(...ys) - 2;
+  const yMax = Math.max(...ys) + 2;
+  const xScale = v => padL + (v / xMax) * (W - padL - padR);
+  const yScale = v => H - padB - ((v - yMin) / (yMax - yMin)) * (H - padT - padB);
+
+  let svg = `<svg class="pareto-svg" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto;">`;
+  // gridlines + axis labels (x)
+  const xTicks = 5;
+  for (let i = 0; i <= xTicks; i++) {
+    const v = (xMax / xTicks) * i;
+    const x = xScale(v);
+    svg += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${H - padB}" stroke="currentColor" stroke-opacity="0.08"/>`;
+    svg += `<text x="${x}" y="${H - padB + 16}" text-anchor="middle">$${v.toFixed(1)}</text>`;
+  }
+  const yTicks = 4;
+  for (let i = 0; i <= yTicks; i++) {
+    const v = yMin + ((yMax - yMin) / yTicks) * i;
+    const y = yScale(v);
+    svg += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="currentColor" stroke-opacity="0.08"/>`;
+    svg += `<text x="${padL - 8}" y="${y + 3}" text-anchor="end">${v.toFixed(0)}</text>`;
+  }
+  svg += `<text class="pareto-axis-label" x="${(W + padL - padR) / 2}" y="${H - 4}" text-anchor="middle">Blended price ($/1M tokens, 3:1 in:out)</text>`;
+  svg += `<text class="pareto-axis-label" x="${-H / 2}" y="12" text-anchor="middle" transform="rotate(-90)">AA Intelligence Index</text>`;
+
+  // frontier line connecting non-dominated points sorted by price
+  const frontier = paretoData.filter(m => !m.dominated).sort((a, b) => a.blended - b.blended);
+  if (frontier.length > 1) {
+    const pathPts = frontier.map(m => `${xScale(m.blended)},${yScale(m.index)}`).join(' ');
+    svg += `<polyline points="${pathPts}" fill="none" stroke="var(--blue,#2a78d6)" stroke-width="1.25" stroke-dasharray="3,3" opacity="0.5"/>`;
+  }
+
+  paretoData.forEach(m => {
+    const cx = xScale(m.blended), cy = yScale(m.index);
+    const cls = m.dominated ? 'pareto-dot-dominated' : 'pareto-dot-frontier';
+    const r = m.dominated ? 3.5 : 5;
+    svg += `<circle class="${cls}" cx="${cx}" cy="${cy}" r="${r}"><title>${m.model} (${m.lab}) — index ${m.index}, ~$${m.blended.toFixed(2)}/1M blended${m.dominated ? '' : ' — on efficient frontier'}</title></circle>`;
+  });
+  svg += `</svg>`;
+  paretoEl.innerHTML = svg;
+  paretoCaption.textContent = `${paretoData.length} models with both an index score and confirmed split pricing · filled = on the efficient frontier, faded = dominated by a model that's both smarter and cheaper (or equal on one, better on the other)`;
+})();
+
+// ---------- Tracking history ----------
+const historyEl = document.getElementById('historyNote');
+if (history.length === 1) {
+  historyEl.innerHTML = `
+    <div class="history-note"><span class="history-dot"></span>
+    <div>First tracked snapshot: <b>${history[0].date}</b> — top index ${history[0].topIndex}, top SWE-bench Verified ${history[0].topSwe}, top GPQA ${history[0].topGpqa}, cheapest capable model ${history[0].cheapest}.
+    <br><span style="color:var(--muted);font-size:12px;">Week-over-week deltas will start appearing in the weekly summary once a second snapshot is recorded; a real trend chart needs a few more weeks of history to be meaningful.</span></div></div>`;
+} else {
+  historyEl.innerHTML = history.map(h => `
+    <div class="history-note"><span class="history-dot"></span>
+    <div><b>${h.date}</b> — top index ${h.topIndex} · top SWE-bench Verified ${h.topSwe} · top GPQA ${h.topGpqa} · cheapest ${h.cheapest}</div></div>
+  `).join('');
+}
+
+// ---------- Table ----------
+const tbody = document.getElementById('tableBody');
+const labFilter = document.getElementById('labFilter');
+const weightsFilter = document.getElementById('weightsFilter');
+const searchBox = document.getElementById('searchBox');
+
+const labs = Array.from(new Set(models.map(m => m.lab))).sort();
+labs.forEach(l => {
+  const opt = document.createElement('option');
+  opt.value = l; opt.textContent = l;
+  labFilter.appendChild(opt);
+});
+
+let sortKey = 'index';
+let sortDir = -1;
+
+function rowsData() {
+  const term = searchBox.value.trim().toLowerCase();
+  const lab = labFilter.value;
+  const weightsWant = weightsFilter.value;
+  let data = models.filter(m => {
+    const matchesTerm = !term || m.model.toLowerCase().includes(term) || m.lab.toLowerCase().includes(term);
+    const matchesLab = !lab || m.lab === lab;
+    const matchesWeights = !weightsWant || (m.weights || '').startsWith(weightsWant);
+    return matchesTerm && matchesLab && matchesWeights;
+  });
+  data = data.map(m => ({ ...m, releasedSort: m.released || '0000-00-00' }));
+  data.sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (av === null || av === undefined) av = sortDir === 1 ? Infinity : -Infinity;
+    if (bv === null || bv === undefined) bv = sortDir === 1 ? Infinity : -Infinity;
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+  return data;
+}
+
+function renderTable() {
+  const data = rowsData();
+  tbody.innerHTML = data.map(m => `
+    <tr>
+      <td class="model-cell"><span class="model-name">${m.model}</span></td>
+      <td>${m.lab}</td>
+      <td class="model-cell">${fmtWeights(m.weights, m.weightsNote)}</td>
+      <td class="num">${fmtNum(m.index)}</td>
+      <td class="num">${fmtElo(m.elo)}</td>
+      <td class="num">${fmtPct(m.swe)}</td>
+      <td class="num">${fmtPct(m.gpqa)}</td>
+      <td class="num">${fmtSpeed(m.speed)}</td>
+      <td class="num">${fmtContext(m.context)}</td>
+      <td class="num">${fmtPrice(m.priceIn)}</td>
+      <td class="num">${fmtPrice(m.priceOut)}</td>
+      <td class="num">${fmtPrice(m.costTask)}</td>
+      <td class="num">${fmtPct(m.spendShare)}</td>
+      <td>${fmtDate(m.released)}</td>
+    </tr>
+  `).join('');
+
+  document.querySelectorAll('#modelTable thead th').forEach(th => {
+    const arrow = th.querySelector('.arrow');
+    if (th.dataset.key === sortKey) {
+      arrow.textContent = sortDir === 1 ? '▲' : '▼';
+    } else {
+      arrow.textContent = '';
+    }
+  });
+}
+
+document.querySelectorAll('#modelTable thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = key === 'model' || key === 'lab' ? 1 : -1; }
+    renderTable();
+  });
+});
+searchBox.addEventListener('input', renderTable);
+labFilter.addEventListener('change', renderTable);
+weightsFilter.addEventListener('change', renderTable);
+renderTable();
+
+// ---------- CSV export ----------
+document.getElementById('exportCsv').addEventListener('click', () => {
+  const cols = ['model','lab','weights','index','elo','swe','gpqa','speed','context','priceIn','priceOut','costTask','spendShare','released'];
+  const header = ['Model','Lab','Weights','AA Index','Arena Elo','SWE-bench Verified','GPQA','Speed (tok/s)','Context','$/1M in','$/1M out','Cost/Task','Enterprise Spend Share','Released'];
+  const esc = v => {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const rows = [header.join(',')].concat(
+    models.map(m => cols.map(c => esc(m[c])).join(','))
+  );
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'llm-benchmark-tracker.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// ---------- Compare two models ----------
+const compareA = document.getElementById('compareA');
+const compareB = document.getElementById('compareB');
+const compareTable = document.getElementById('compareTable');
+const modelsSorted = models.slice().sort((a, b) => a.model.localeCompare(b.model));
+modelsSorted.forEach(m => {
+  [compareA, compareB].forEach(sel => {
+    const opt = document.createElement('option');
+    opt.value = m.model; opt.textContent = `${m.model} (${m.lab})`;
+    sel.appendChild(opt);
+  });
+});
+compareA.value = "GPT-6 Astra";
+compareB.value = "Claude Opus 5";
+
+const compareRows = [
+  { label: 'Lab', key: 'lab', fmt: v => v || '—' },
+  { label: 'Weights', key: 'weights', fmt: v => v || '—' },
+  { label: 'AA Index', key: 'index', fmt: fmtNum, dir: 'higher' },
+  { label: 'Arena Elo', key: 'elo', fmt: fmtElo, dir: 'higher' },
+  { label: 'SWE-bench Verified', key: 'swe', fmt: fmtPct, dir: 'higher' },
+  { label: 'GPQA', key: 'gpqa', fmt: fmtPct, dir: 'higher' },
+  { label: 'Speed (tok/s)', key: 'speed', fmt: fmtSpeed, dir: 'higher' },
+  { label: 'Context', key: 'context', fmt: fmtContext, dir: 'higher' },
+  { label: '$/1M in', key: 'priceIn', fmt: fmtPrice, dir: 'lower' },
+  { label: '$/1M out', key: 'priceOut', fmt: fmtPrice, dir: 'lower' },
+  { label: 'Cost/Task', key: 'costTask', fmt: fmtPrice, dir: 'lower' },
+  { label: 'Enterprise Spend Share', key: 'spendShare', fmt: fmtPct, dir: 'higher' },
+  { label: 'Released', key: 'released', fmt: fmtDate },
+];
+
+function renderCompare() {
+  const a = models.find(m => m.model === compareA.value);
+  const b = models.find(m => m.model === compareB.value);
+  if (!a || !b) return;
+  let html = `<thead><tr><th></th><th>${a.model}</th><th>${b.model}</th></tr></thead><tbody>`;
+  compareRows.forEach(r => {
+    const av = a[r.key], bv = b[r.key];
+    let aWin = false, bWin = false;
+    if (r.dir && av !== null && av !== undefined && bv !== null && bv !== undefined) {
+      if (r.dir === 'higher') { aWin = av > bv; bWin = bv > av; }
+      else { aWin = av < bv; bWin = bv < av; }
+    }
+    html += `<tr>
+      <td class="compare-label">${r.label}</td>
+      <td class="${aWin ? 'win' : ''}">${r.fmt(av)}</td>
+      <td class="${bWin ? 'win' : ''}">${r.fmt(bv)}</td>
+    </tr>`;
+  });
+  html += `</tbody>`;
+  compareTable.innerHTML = html;
+}
+compareA.addEventListener('change', renderCompare);
+compareB.addEventListener('change', renderCompare);
+renderCompare();
+
+// ---------- Timeline ----------
+const tlEl = document.getElementById('timeline');
+timelineEvents
+  .slice()
+  .sort((a, b) => b.date.localeCompare(a.date))
+  .forEach(ev => {
+    const row = document.createElement('div');
+    row.className = 'tl-item';
+    row.innerHTML = `
+      <div class="tl-date">${fmtTlDate(ev.date)}</div>
+      <div class="tl-lab">${ev.lab}</div>
+      <div class="tl-model">${ev.model}</div>
+    `;
+    tlEl.appendChild(row);
+  });
+
+// ---------- Lab disclosure table ----------
+const labBody = document.getElementById('labTableBody');
+function fmtFmti(v) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  if (typeof v === 'string') return `<span class="tag">${v}</span>`;
+  return v;
+}
+function fmtSink(v) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  return v;
+}
+function fmtEuAct(v) {
+  if (v === null || v === undefined) return '<span class="dash">—</span>';
+  return v ? '<span class="tag tag-proprietary">Presumed in-scope*</span>' : '<span class="dash">—</span>';
+}
+labBody.innerHTML = labDisclosure.map(l => `
+  <tr>
+    <td class="model-cell"><span class="model-name">${l.lab}</span></td>
+    <td class="num">${fmtFmti(l.fmti)}</td>
+    <td class="num">${fmtSink(l.sink)}</td>
+    <td class="model-cell">${fmtEuAct(l.euAct)}</td>
+    <td class="model-cell">${l.note || '<span class="dash">—</span>'}</td>
+  </tr>
+`).join('');
+
+// ---------- Developer usage list ----------
+const usageEl = document.getElementById('usageList');
+usageTop.forEach(u => {
+  const row = document.createElement('div');
+  row.className = 'usage-row';
+  row.innerHTML = `
+    <div><span class="usage-model">#${u.rank} ${u.model}</span><br><span class="usage-meta">${u.lab}</span></div>
+    <div class="usage-tokens">${u.tokens}<br><span class="usage-meta">${u.change}</span></div>
+  `;
+  usageEl.appendChild(row);
+});
+
+// ---------- Sources ----------
+const srcEl = document.getElementById('sourcesList');
+sources.forEach(s => {
+  const div = document.createElement('div');
+  div.innerHTML = `<a href="${s.url}" target="_blank" rel="noopener">${s.title}</a>`;
+  srcEl.appendChild(div);
+});
+</script>
+</body>
+</html>

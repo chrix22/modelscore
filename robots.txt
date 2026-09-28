@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://modelscore.io/sitemap.xml
+Sitemap: https://modelscore.net/sitemap.xml

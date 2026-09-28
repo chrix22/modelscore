@@ -23,7 +23,7 @@ Settings → Pages → Deploy from branch → `main` / root. The dashboard will 
 
 ## SEO
 
-- `index.html` carries a descriptive `<title>`, meta description, canonical URL (`https://modelscore.io/`), Open Graph / Twitter Card tags, an inline SVG favicon, and JSON-LD `Dataset` structured data.
+- `index.html` carries a descriptive `<title>`, meta description, canonical URL (`https://modelscore.net/`), Open Graph / Twitter Card tags, an inline SVG favicon, and JSON-LD `Dataset` structured data.
 - `og-image.png` (1200×630) is the social-share preview image — upload it alongside `index.html` at the site root so `og:image`/`twitter:image` resolve.
 - `robots.txt` and `sitemap.xml` — upload both at the site root too. `sitemap.xml`'s `<lastmod>` should be bumped on each weekly refresh.
 - Section headers use real `<h2>` elements (not just styled `<div>`s) for a proper heading outline.

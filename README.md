@@ -21,13 +21,6 @@ This dashboard is refreshed weekly by an automated routine that re-fetches each 
 
 Settings → Pages → Deploy from branch → `main` / root. The dashboard will then be live at `https://chrix22.github.io/modelscore/`.
 
-## SEO
-
-- `index.html` carries a descriptive `<title>`, meta description, canonical URL (`https://modelscore.io/`), Open Graph / Twitter Card tags, an inline SVG favicon, and JSON-LD `Dataset` structured data.
-- `og-image.png` (1200×630) is the social-share preview image — upload it alongside `index.html` at the site root so `og:image`/`twitter:image` resolve.
-- `robots.txt` and `sitemap.xml` — upload both at the site root too. `sitemap.xml`'s `<lastmod>` should be bumped on each weekly refresh.
-- Section headers use real `<h2>` elements (not just styled `<div>`s) for a proper heading outline.
-
 ## Data integrity notes
 
 Every figure on the dashboard is sourced and cited (see the Methodology & Sources tab). Where trackers disagree or data is missing, the dashboard says so explicitly rather than averaging or guessing — see the caveats list before quoting any number from this project elsewhere.

@@ -3,7 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LLM Benchmark Tracker</title>
+<title>LLM Benchmark Tracker — Compare GPT, Claude, Gemini &amp; Open-Weight Models | ModelScore</title>
+<meta name="description" content="Weekly-updated tracker comparing frontier LLMs (GPT-6 Astra, Claude Fable 5.1, Gemini, Grok, DeepSeek, Qwen and more) on intelligence benchmarks, pricing, open-weight status, enterprise adoption, and AI governance — with every figure sourced and cited.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://modelscore.io/">
+<meta name="theme-color" content="#1a1a19">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a1a19'/%3E%3Crect x='7' y='16' width='5' height='10' rx='1.5' fill='%233987e5'/%3E%3Crect x='14' y='10' width='5' height='16' rx='1.5' fill='%233987e5'/%3E%3Crect x='21' y='6' width='5' height='20' rx='1.5' fill='%233987e5'/%3E%3C/svg%3E">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ModelScore">
+<meta property="og:title" content="LLM Benchmark Tracker — Compare GPT, Claude, Gemini & Open-Weight Models">
+<meta property="og:description" content="Weekly-updated tracker: intelligence benchmarks, pricing, open-weight status, enterprise adoption, and AI governance for frontier LLMs — every figure sourced and cited.">
+<meta property="og:url" content="https://modelscore.io/">
+<meta property="og:image" content="https://modelscore.io/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LLM Benchmark Tracker — ModelScore">
+<meta name="twitter:description" content="Weekly-updated comparison of frontier LLMs: intelligence, pricing, adoption &amp; governance — every figure sourced and cited.">
+<meta name="twitter:image" content="https://modelscore.io/og-image.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "LLM Benchmark Tracker",
+  "description": "Weekly-updated dataset comparing frontier large language models on intelligence benchmarks (Artificial Analysis Intelligence Index, SWE-bench Verified, GPQA Diamond, Arena Elo), pricing, open-weight status, enterprise adoption (Ramp AI Index, OpenRouter), and AI governance (Stanford FMTI, SINK Project, EU AI Act Article 51).",
+  "url": "https://modelscore.io/",
+  "sameAs": "https://github.com/chrix22/modelscore",
+  "creator": { "@type": "Person", "name": "Christophe" },
+  "license": "https://github.com/chrix22/modelscore",
+  "keywords": ["LLM benchmark", "GPT-6", "Claude", "Gemini", "Grok", "DeepSeek", "Qwen", "AI Act", "AI pricing", "AI leaderboard", "open weight models"],
+  "variableMeasured": ["Artificial Analysis Intelligence Index", "SWE-bench Verified", "GPQA Diamond", "Arena Elo", "Token price", "Context window", "Enterprise spend share", "Foundation Model Transparency Index", "EU AI Act systemic-risk status"],
+  "distribution": { "@type": "DataDownload", "encodingFormat": "text/csv", "name": "CSV export (in-page button)" }
+}
+</script>
+
 <style>
   :root {
     --surface: #fcfcfb;
@@ -51,8 +86,13 @@
     color: var(--text);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
+    max-width: 100%;
+    overflow-x: hidden;
   }
   body { padding: 24px 16px 64px; }
+  @media (max-width: 480px) {
+    body { padding: 16px 12px 48px; }
+  }
 
   .wrap { max-width: 1080px; margin: 0 auto; }
 
@@ -129,7 +169,7 @@
     box-shadow: var(--shadow);
   }
   .tile .label { text-transform: uppercase; letter-spacing: 0.08em; font-size: 10.5px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
-  .tile .value { font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .tile .value { font-size: 24px; font-weight: 650; letter-spacing: -0.01em; }
   .tile .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
   .card {
@@ -138,6 +178,10 @@
     border-radius: 10px;
     padding: 20px;
     box-shadow: var(--shadow);
+    max-width: 100%;
+  }
+  @media (max-width: 480px) {
+    .card { padding: 14px; border-radius: 8px; }
   }
 
   /* Bar chart */
@@ -146,8 +190,12 @@
     grid-template-columns: 168px 1fr 44px;
     align-items: center;
     gap: 10px;
-    padding: 5px 0;
+    padding: 5px 6px;
+    margin: 0 -6px;
+    border-radius: 6px;
+    transition: background-color 0.1s ease;
   }
+  .chart-row:hover { background: var(--row-hover); }
   .chart-row .name {
     font-size: 12.5px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -174,6 +222,12 @@
     color: var(--text);
   }
   .axis-caption { font-size: 10.5px; color: var(--muted); margin-top: 10px; text-align: right; }
+  @media (max-width: 480px) {
+    .chart-row { grid-template-columns: 96px 1fr 34px; gap: 6px; }
+    .chart-row .name { font-size: 11px; }
+    .chart-row .lab { font-size: 9.5px; }
+    .chart-row .score { font-size: 11px; }
+  }
 
   /* Value ranking list */
   .value-row {
@@ -181,14 +235,22 @@
     grid-template-columns: 22px 1fr 70px;
     align-items: center;
     gap: 10px;
-    padding: 7px 0;
+    padding: 7px 6px;
+    margin: 0 -6px;
     border-bottom: 1px solid var(--border);
+    border-radius: 6px;
+    transition: background-color 0.1s ease;
   }
   .value-row:last-child { border-bottom: none; }
+  .value-row:hover { background: var(--row-hover); }
   .value-rank { color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
   .value-name { font-size: 12.5px; font-weight: 550; }
   .value-lab { color: var(--muted); font-size: 10.5px; display: block; font-weight: 400; }
-  .value-score { text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--blue); font-weight: 600; }
+  .value-score { text-align: right; font-size: 12px; color: var(--blue); font-weight: 600; }
+  @media (max-width: 480px) {
+    .value-row { grid-template-columns: 16px 1fr 50px; gap: 6px; }
+    .value-name { font-size: 11.5px; }
+  }
 
   /* Pareto chart */
   .pareto-wrap { width: 100%; overflow-x: auto; }
@@ -196,6 +258,13 @@
   .pareto-dot-frontier { fill: var(--blue); }
   .pareto-dot-dominated { fill: var(--muted); opacity: 0.55; }
   .pareto-axis-label { font-size: 10.5px; fill: var(--muted); }
+
+  /* Chart legend */
+  .chart-legend { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-dot-frontier { background: var(--blue); }
+  .legend-dot-dominated { background: var(--muted); opacity: 0.55; }
 
   /* Table */
   .table-controls {
@@ -244,12 +313,33 @@
   .model-name { font-weight: 550; }
   .num { text-align: right; }
   .dash { color: var(--muted); }
-  .table-scroll { overflow-x: auto; }
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    border-radius: 6px;
+  }
+  .table-scroll::-webkit-scrollbar { height: 6px; }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .table-hint {
+    display: none;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  @media (max-width: 720px) {
+    .table-hint { display: block; }
+  }
 
   /* Compare widget */
   .compare-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-  .compare-controls select { flex: 1; min-width: 160px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+  .compare-controls select { flex: 1 1 160px; min-width: 0; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
   .compare-vs { color: var(--muted); font-size: 12px; font-weight: 600; }
+  @media (max-width: 480px) {
+    .compare-controls { flex-direction: column; align-items: stretch; }
+    .compare-controls select { width: 100%; }
+    .compare-vs { text-align: center; }
+  }
   .compare-grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   .compare-grid th { text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--border); }
   .compare-grid td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
@@ -278,6 +368,16 @@
     padding: 2px 9px;
     white-space: nowrap;
     justify-self: start;
+  }
+  @media (max-width: 480px) {
+    .tl-item {
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "date lab" "model model";
+      row-gap: 6px;
+    }
+    .tl-date { grid-area: date; }
+    .tl-lab { grid-area: lab; }
+    .tl-model { grid-area: model; }
   }
 
   /* Caveats */
@@ -357,8 +457,8 @@
       <div class="tiles">
         <div class="tile">
           <div class="label">Top Intelligence Index</div>
-          <div class="value">53</div>
-          <div class="meta">Claude Fable 5.1 &amp; GPT-6 Astra (tied, max effort) — Artificial Analysis</div>
+          <div class="value">58</div>
+          <div class="meta">Claude Opus 5.5 (max effort) — Artificial Analysis</div>
         </div>
         <div class="tile">
           <div class="label">Top SWE-bench Verified</div>
@@ -379,7 +479,7 @@
     </section>
 
     <section>
-      <div class="section-label">Artificial Analysis Intelligence Index — Top Models</div>
+      <h2 class="section-label">Artificial Analysis Intelligence Index — Top Models</h2>
       <div class="card">
         <div id="chart"></div>
         <div class="axis-caption">Axis scale: 0–65 · Artificial Analysis Intelligence Index (raw points, best reported effort tier per model)</div>
@@ -387,7 +487,7 @@
     </section>
 
     <section>
-      <div class="section-label">Best Value — Intelligence per Dollar</div>
+      <h2 class="section-label">Best Value — Intelligence per Dollar</h2>
       <div class="card">
         <p class="disclosure-intro">Computed from this dashboard's own data (not a third-party ranking): AA Intelligence Index divided by a blended $/1M-token price (weighted 3 input : 1 output, the usual approximation for a typical request). Only models with both an index score and confirmed pricing can be ranked — 9 of 19 this week.</p>
         <div id="valueList"></div>
@@ -395,15 +495,19 @@
     </section>
 
     <section>
-      <div class="section-label">Efficient Frontier — Intelligence vs. Price</div>
+      <h2 class="section-label">Efficient Frontier — Intelligence vs. Price</h2>
       <div class="card">
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot legend-dot-frontier"></span>On efficient frontier</span>
+          <span class="legend-item"><span class="legend-dot legend-dot-dominated"></span>Dominated</span>
+        </div>
         <div class="pareto-wrap"><div id="pareto"></div></div>
         <div class="axis-caption" id="paretoCaption"></div>
       </div>
     </section>
 
     <section>
-      <div class="section-label">Tracking History</div>
+      <h2 class="section-label">Tracking History</h2>
       <div class="card">
         <div id="historyNote"></div>
       </div>
@@ -415,7 +519,7 @@
   <div class="tab-panel" id="panel-compare">
 
     <section>
-      <div class="section-label">Model Comparison</div>
+      <h2 class="section-label">Model Comparison</h2>
       <div class="card">
         <div class="table-controls">
           <input type="text" id="searchBox" placeholder="Filter by model or lab…">
@@ -428,6 +532,7 @@
             <option value="Proprietary">Proprietary only</option>
           </select>
         </div>
+        <div class="table-hint">&#8592; Swipe to see more columns &#8594;</div>
         <div class="table-scroll">
           <table id="modelTable">
             <thead>
@@ -455,13 +560,14 @@
     </section>
 
     <section>
-      <div class="section-label">Compare Two Models</div>
+      <h2 class="section-label">Compare Two Models</h2>
       <div class="card">
         <div class="compare-controls">
           <select id="compareA"></select>
           <span class="compare-vs">vs.</span>
           <select id="compareB"></select>
         </div>
+        <div class="table-hint">&#8592; Swipe to see more &#8594;</div>
         <div class="table-scroll">
           <table class="compare-grid" id="compareTable"></table>
         </div>
@@ -473,7 +579,7 @@
   <!-- ================= RECENT RELEASES ================= -->
   <div class="tab-panel" id="panel-releases">
     <section>
-      <div class="section-label">Released in the Last 8 Weeks</div>
+      <h2 class="section-label">Released in the Last 8 Weeks</h2>
       <div class="card">
         <div class="timeline" id="timeline"></div>
       </div>
@@ -483,11 +589,12 @@
   <!-- ================= GOVERNANCE ================= -->
   <div class="tab-panel" id="panel-governance">
     <section>
-      <div class="section-label">Lab Transparency &amp; Environmental Disclosure</div>
+      <h2 class="section-label">Lab Transparency &amp; Environmental Disclosure</h2>
       <div class="card">
         <p class="disclosure-intro">
           No public benchmark scores individual model <i>versions</i> (e.g. GPT-6 Astra vs. GPT-5.6 Sol) on ESG, environmental, or ethical-AI grounds the way the Model Comparison tab scores intelligence or coding &mdash; so this section is <b>per lab, not per model</b>, and the same rating applies to every model that lab ships. It combines three independent, differently-scoped, real sources rather than one invented "ESG score": Stanford HAI's <b>Foundation Model Transparency Index</b> (disclosure &amp; accountability practices), the <b>SINK Project</b> (environmental/sustainability performance from public data only, a newer rater we could not independently verify beyond its own methodology page &mdash; weight it below the academic FMTI), and the <b>EU AI Act's Article 51 systemic-risk presumption</b>: models trained above 10<sup>25</sup> FLOP are presumed "systemic risk" under the Act. As of Epoch AI's April 2026 compute report, OpenAI, Google, Anthropic and Meta are named as operating at that scale (obligations phase in through August 2026); we could not obtain a complete model-by-model registry, so this is a lab-level presumption, not a confirmed per-model designation. A dash means the lab simply hasn't been publicly assessed by that index &mdash; not that it scored zero.
         </p>
+        <div class="table-hint">&#8592; Swipe to see more columns &#8594;</div>
         <div class="table-scroll">
           <table id="labTable">
             <thead>
@@ -510,7 +617,7 @@
   <!-- ================= CORPORATE ADOPTION ================= -->
   <div class="tab-panel" id="panel-adoption">
     <section>
-      <div class="section-label">Corporate Adoption</div>
+      <h2 class="section-label">Corporate Adoption</h2>
       <div class="card">
         <p class="disclosure-intro">
           Sourced from the <b>Ramp AI Index</b>, built from real corporate-card and token-spend transactions on Ramp's platform (not surveys or self-reported usage) &mdash; the closest thing to an independent "corporate penetration" figure for AI. It publishes two different metrics; don't conflate them. <b>Business adoption</b> (below) is lab-level: the share of U.S. businesses on Ramp with an active paid subscription to that lab. <b>Enterprise spend share</b>, in the Model Comparison tab, is model-level: each model's share of the dollars Ramp tracks flowing to AI token/subscription spend, published only for the models large enough to rank in Ramp's own top-10 that month &mdash; a blank cell there means "not in Ramp's tracked top 10," not zero. Ramp's customer base skews U.S., mid-market and tech-heavy, so treat this as a real but non-representative sample, not global market share.
@@ -542,7 +649,7 @@
     </section>
 
     <section>
-      <div class="section-label">Developer Usage — OpenRouter</div>
+      <h2 class="section-label">Developer Usage — OpenRouter</h2>
       <div class="card">
         <p class="disclosure-intro">A different lens on "adoption": OpenRouter measures actual API tokens routed across its platform (prompt + completion), skewing toward individual developers and smaller teams rather than Ramp's corporate-card SMB sample. Ranking is by raw token volume, which reflects usage, not quality &mdash; a verbose model processes more tokens for the same task. Only the models from this table that appear in OpenRouter's current top ranks are shown; the rest of OpenRouter's top 5 that week (Hy4 Preview, Space Bunny Alpha, GPT-5.6 Luna) aren't tracked elsewhere in this dashboard so aren't listed below.</p>
         <div id="usageList"></div>
@@ -553,17 +660,18 @@
   <!-- ================= METHODOLOGY & SOURCES ================= -->
   <div class="tab-panel" id="panel-methodology">
     <section>
-      <div class="section-label">Read This Before Quoting the Numbers</div>
+      <h2 class="section-label">Read This Before Quoting the Numbers</h2>
       <div class="card">
         <ul class="caveats">
-          <li><b>Artificial Analysis Intelligence Index — two trackers disagree, materially.</b> Fetched directly from artificialanalysis.ai, the top of the index is a near-tie between Claude Fable 5.1 and GPT-6 Astra (53 points each, max-effort configs), with GPT-5.6 Sol well back in 13th (47). BenchLM's mirror of the same benchmark (benchlm.ai/benchmarks/artificialanalysis) shows a completely different order and a different scale: GPT-5.6 Sol first at 58.9%, GPT-6 Astra fifth at 52.8%, and scores expressed as percentages rather than raw points. This isn't a rounding difference — it's a different ranking of the same models. We did not average the two. The chart and "Top Intelligence Index" tile use the direct artificialanalysis.ai figures; treat the BenchLM percentages as a separate, disagreeing read until one tracker corrects.</li>
+          <li><b>Artificial Analysis Intelligence Index — two trackers disagree, materially.</b> Fetched directly from artificialanalysis.ai, Claude Opus 5.5 now leads at 58 (max effort), released Sep 22 and not yet reflected everywhere else in this dashboard (no SWE-bench Verified, GPQA, Arena Elo, or speed/cost figures found for it yet — same for GPT-6 Sol and Grok 4.7, both added this refresh). As of our last check of BenchLM's mirror of the same benchmark (benchlm.ai/benchmarks/artificialanalysis, checked Sep 25), it showed a completely different order and a different scale — GPT-5.6 Sol first at 58.9%, GPT-6 Astra fifth at 52.8%, percentages rather than raw points — and had not yet incorporated Opus 5.5 at all. This isn't a rounding difference — it's a different ranking of the same models, now further out of sync given how recent the new releases are. We did not average the two. The chart and "Top Intelligence Index" tile use the direct artificialanalysis.ai figures; treat the BenchLM percentages as a separate, disagreeing, and currently stale read.</li>
           <li><b>SWE-bench Verified coverage lags the newest releases.</b> The BenchLM SWE-bench Verified leaderboard tops out at Claude Opus 5 (96%), but several models released in the past three weeks — Claude Fable 5.1, GPT-6 Astra, Muse Spark 1.3, Gemini 3.8 Flash, GLM-5.3, Kimi K3, DeepSeek-V4.1-Flash — simply aren't on that leaderboard yet. Their SWE-bench Verified cells are blank (em dash), not zero; the tracker hasn't run them, not that they scored poorly.</li>
           <li><b>SWE-bench Pro is not comparable to SWE-bench Verified, and its leaderboard looks stale.</b> Morph's SWE-bench Pro leaderboard shows a substantially harder task set — even the top model there (Claude Opus 4.5, 45.9%) scores far below Verified leaders — and, as of this snapshot, lists no model released after roughly Q2 2026. We're not plotting SWE-bench Pro numbers alongside Verified numbers because the two benchmarks aren't on the same scale and mixing them would misstate difficulty.</li>
           <li><b>Pricing is blended vs. split-rate depending on source.</b> Artificial Analysis's own leaderboard reports "cost per task," not per-token input/output pricing. The $/1M in and $/1M out figures come from llm-stats.com's per-model pages instead; where we could not confirm a split rate (e.g. GPT-5.6 Sol, Step 5 Preview), the cells are left blank rather than guessed. The "blended price" used for the Best Value ranking and Efficient Frontier chart on the Overview tab is our own 3:1 input:output approximation of those same split rates — a modeling assumption, not a reported figure.</li>
           <li><b>Effort-tier variants aren't separate models.</b> Artificial Analysis lists the same underlying model multiple times at different reasoning-effort settings (low/medium/high/xhigh/max), each with its own index score and cost. The chart and table collapse each model to its single best-reported effort tier to avoid double-counting; if you need the low-cost/low-effort variant's numbers specifically, go to the source.</li>
           <li><b>Four columns added Sep 21–27, uneven coverage.</b> Weights, Arena Elo, Speed (tok/s), and Cost/Task were added over recent refreshes. Weights (open vs. proprietary) is confirmed for nearly every row; a few Chinese-lab entries are marked "not individually confirmed" because we're inferring from that lab's release pattern rather than a direct source, and Step 5 Preview is proprietary today with StepFun's own announcement promising open weights on Oct 15, 2026. Arena Elo comes from arena.ai's live text leaderboard and only covers the subset of models it currently ranks. Speed and Cost/Task are populated for only 5 of 19 models; repeated fetch failures on the source site prevented filling in the rest.</li>
           <li><b>Agentic / tool-use benchmarks were evaluated and deliberately left out.</b> We checked BFCL v4 and τ³-bench, two real public agentic-tool-use leaderboards, as a candidate KPI. Neither is usable here: both leaderboards are dominated by small/niche models and are missing nearly every frontier model in this table, and τ³-bench's own page states "most rows are provider self-reports rather than independent verification." Forcing that data in would misrepresent frontier-model agentic ability rather than measure it, so we skipped it rather than publish numbers we don't trust.</li>
-          <li><b>Two different Ramp metrics look similar but aren't.</b> "Business adoption" (% of Ramp businesses paying a lab) and "spend share" (% of tracked AI dollars going to a lab or model) are separate measurements with separate figures — some secondary write-ups report the two under similar-sounding headlines with different numbers for the same lab in the same month. We used ramp.com's own September 2026 index page for the lab-level figures and a source citing Ramp's per-model spend breakdown for Enterprise Spend Share; we did not average or reconcile them. Only 5 of 19 models have a spend-share figure, because Ramp itself only publishes a top-10 ranking each month.</li>
+          <li><b>Three models added same-day, sparse on purpose.</b> Claude Opus 5.5, GPT-6 Sol and Grok 4.7 all launched Sep 21-22 — days before this specific refresh — and none of the trackers we use for SWE-bench Verified, GPQA, Arena Elo, speed or cost-per-task have caught up yet. We added their confirmed AA Index score, pricing, context and release date, and left everything else blank rather than estimate from the model family's prior version.</li>
+        <li><b>Two different Ramp metrics look similar but aren't.</b> "Business adoption" (% of Ramp businesses paying a lab) and "spend share" (% of tracked AI dollars going to a lab or model) are separate measurements with separate figures — some secondary write-ups report the two under similar-sounding headlines with different numbers for the same lab in the same month. We used ramp.com's own September 2026 index page for the lab-level figures and a source citing Ramp's per-model spend breakdown for Enterprise Spend Share; we did not average or reconcile them. Only 5 of 19 models have a spend-share figure, because Ramp itself only publishes a top-10 ranking each month.</li>
           <li><b>OpenRouter usage measures volume, not quality — and it's a third, different metric again.</b> It's neither "who's paying" (Ramp) nor "who scores best" (AA Index) but "how many tokens got routed," which rewards verbose models and heavy automated/batch usage alongside genuine popularity. We list it separately and don't merge it into the Enterprise Spend Share column.</li>
           <li><b>The EU AI Act systemic-risk flag is a lab-level presumption, not a confirmed model registry.</b> We could not find a public, complete list of the specific model versions formally designated under Article 51 — only a secondary source naming the labs (OpenAI, Google, Anthropic, Meta) reported by Epoch AI to have crossed the 10<sup>25</sup> FLOP compute threshold as of April 2026. Treat the "Presumed in-scope" tag in Governance as directional, not a legal determination.</li>
           <li><b>The Best Value ranking and Efficient Frontier chart are our own calculations, not a cited third-party metric.</b> Both divide the AA Index by a 3:1-weighted blended price we compute from the $/1M columns. They only include the 9 of 19 models with both an index score and confirmed split pricing — narrower coverage than the main table.</li>
@@ -574,7 +682,7 @@
     </section>
 
     <section>
-      <div class="section-label">Sources</div>
+      <h2 class="section-label">Sources</h2>
       <div class="card">
         <div class="sources-list" id="sourcesList"></div>
       </div>
@@ -607,9 +715,15 @@ const models = [
   { model: "Kimi K2.8 Preview", lab: "Moonshot AI", index: null, swe: null, gpqa: null, context: 1000000, priceIn: null, priceOut: null, released: "2026-09-11", weights: "Open", weightsNote: "K-series pattern, not individually confirmed", speed: null, costTask: null, elo: null },
   { model: "Atria Dawn Preview", lab: "Shanghai AI Laboratory", index: null, swe: null, gpqa: null, context: null, priceIn: null, priceOut: null, released: "2026-09-11", weights: "Open", speed: null, costTask: null, elo: null },
   { model: "Ling 3.0 Flash Fin", lab: "InclusionAI", index: null, swe: null, gpqa: null, context: null, priceIn: null, priceOut: null, released: "2026-09-03", weights: "Open", weightsNote: "InclusionAI family pattern, not individually confirmed", speed: null, costTask: null, elo: null },
+  { model: "Claude Opus 5.5", lab: "Anthropic", index: 58, swe: null, gpqa: null, context: 1000000, priceIn: 4.00, priceOut: 20.00, released: "2026-09-22", weights: "Proprietary", speed: null, costTask: null, elo: null },
+  { model: "GPT-6 Sol", lab: "OpenAI", index: 48, swe: null, gpqa: null, context: 1100000, priceIn: 2.00, priceOut: 10.00, released: "2026-09-22", weights: "Proprietary", speed: null, costTask: null, elo: null },
+  { model: "Grok 4.7", lab: "xAI", index: 46, swe: null, gpqa: null, context: 500000, priceIn: 2.00, priceOut: 6.00, released: "2026-09-21", weights: "Proprietary", speed: null, costTask: null, elo: null },
 ];
 
 const timelineEvents = [
+  { date: "2026-09-22", model: "Claude Opus 5.5", lab: "Anthropic" },
+  { date: "2026-09-22", model: "GPT-6 Sol", lab: "OpenAI" },
+  { date: "2026-09-21", model: "Grok 4.7", lab: "xAI" },
   { date: "2026-09-11", model: "Kimi K2.8 Preview", lab: "Moonshot AI" },
   { date: "2026-09-11", model: "Atria Dawn Preview", lab: "Shanghai AI Laboratory" },
   { date: "2026-09-10", model: "DeepSeek-V4.1-Flash", lab: "DeepSeek" },
@@ -643,6 +757,10 @@ const sources = [
   { title: "llm-stats.com — Kimi K3", url: "https://llm-stats.com/models/kimi-k3" },
   { title: "llm-stats.com — GLM-5.3", url: "https://llm-stats.com/models/glm-5.3" },
   { title: "llm-stats.com — DeepSeek-V4 Pro 0813", url: "https://llm-stats.com/models/deepseek-v4-pro-0813" },
+  { title: "llm-stats.com — Claude Opus 5.5", url: "https://llm-stats.com/models/claude-opus-5-5" },
+  { title: "llm-stats.com — Grok 4.7", url: "https://llm-stats.com/models/grok-4.7" },
+  { title: "llm-stats.com — GPT-6 Sol", url: "https://llm-stats.com/models/gpt-6-sol" },
+  { title: "llm-stats.com — LLM updates feed (Sep 21-27 check)", url: "https://llm-stats.com/llm-updates" },
   { title: "OpenAI — GPT-6 Astra announcement", url: "https://openai.com/index/gpt-6-astra/" },
   { title: "Anthropic — Introducing Claude Fable 5.1 and Mythos 5.1", url: "https://www.anthropic.com/claude-fable-and-mythos-5-1" },
   { title: "Google DeepMind — Gemini 3.8 Flash model page", url: "https://deepmind.google/models/gemini/flash/" },
@@ -687,7 +805,7 @@ const usageTop = [
 
 // ---------- Tracking history (grows week over week) ----------
 const history = [
-  { date: "2026-09-27", topIndex: "53 — Claude Fable 5.1 & GPT-6 Astra (tied)", topSwe: "96% — Claude Opus 5", topGpqa: "96.0% — GPT-6 Astra", cheapest: "DeepSeek-V4.1-Flash ($0.22 / $0.66)" },
+  { date: "2026-09-27", topIndex: "58 — Claude Opus 5.5 (up from 53, tied Fable 5.1/GPT-6 Astra, earlier the same day)", topSwe: "96% — Claude Opus 5", topGpqa: "96.0% — GPT-6 Astra", cheapest: "DeepSeek-V4.1-Flash ($0.22 / $0.66)" },
 ];
 
 // ---------- Theme ----------
@@ -778,6 +896,7 @@ chartModels.forEach(m => {
   const row = document.createElement('div');
   row.className = 'chart-row';
   const pct = Math.max(2, (m.index / AXIS_MAX) * 100);
+  row.title = `${m.model} (${m.lab}) — Intelligence Index ${m.index}`;
   row.innerHTML = `
     <div class="name">${m.model}<span class="lab">${m.lab}</span></div>
     <div class="chart-track"><div class="chart-bar" style="width:${pct}%"></div></div>
@@ -823,7 +942,7 @@ paretoData.forEach(m => {
   const xScale = v => padL + (v / xMax) * (W - padL - padR);
   const yScale = v => H - padB - ((v - yMin) / (yMax - yMin)) * (H - padT - padB);
 
-  let svg = `<svg class="pareto-svg" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto;">`;
+  let svg = `<svg class="pareto-svg" role="img" aria-label="Scatter chart of AA Intelligence Index versus blended price per 1M tokens, showing which models sit on the efficient frontier" viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto;">`;
   // gridlines + axis labels (x)
   const xTicks = 5;
   for (let i = 0; i <= xTicks; i++) {
@@ -857,7 +976,7 @@ paretoData.forEach(m => {
   });
   svg += `</svg>`;
   paretoEl.innerHTML = svg;
-  paretoCaption.textContent = `${paretoData.length} models with both an index score and confirmed split pricing · filled = on the efficient frontier, faded = dominated by a model that's both smarter and cheaper (or equal on one, better on the other)`;
+  paretoCaption.textContent = `${paretoData.length} models with both an index score and confirmed split pricing`;
 })();
 
 // ---------- Tracking history ----------

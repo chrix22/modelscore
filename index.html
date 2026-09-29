@@ -184,6 +184,65 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
+  /* Hamburger nav (tablet & mobile). 1200px covers iPad in both orientations
+     (portrait 768-834px and landscape up to ~1194px for 11" Pro/Air), while
+     leaving common laptop widths (1280px+) on the desktop scroll-fade nav. */
+  .tabs-mobile { display: none; }
+  @media (max-width: 1200px) {
+    .tabs-wrap { display: none; }
+    .tabs-mobile { display: block; position: relative; margin-bottom: 24px; }
+  }
+  .hamburger-btn {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .hamburger-btn-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .hamburger-icon { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+  .hamburger-icon span { display: block; width: 16px; height: 2px; border-radius: 1px; background: var(--text); }
+  .hamburger-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hamburger-chevron { color: var(--muted); font-size: 11px; flex-shrink: 0; transition: transform 0.15s ease; }
+  .hamburger-btn[aria-expanded="true"] .hamburger-chevron { transform: rotate(180deg); }
+  .hamburger-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0; right: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    z-index: 30;
+  }
+  .hamburger-menu.open { display: block; }
+  .hamburger-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    border: none;
+    border-left: 3px solid transparent;
+    border-bottom: 1px solid var(--border);
+    background: none;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .hamburger-item:last-child { border-bottom: none; }
+  .hamburger-item:hover { background: var(--row-hover); color: var(--text); }
+  .hamburger-item.active { color: var(--text); font-weight: 650; border-left-color: var(--blue); background: var(--row-hover); }
+
   .tiles {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -493,6 +552,26 @@
     </nav>
     <div class="tab-fade tab-fade-l" aria-hidden="true"></div>
     <div class="tab-fade tab-fade-r" aria-hidden="true"></div>
+  </div>
+
+  <div class="tabs-mobile" id="tabsMobile">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-haspopup="true" aria-expanded="false" aria-controls="hamburgerMenu">
+      <span class="hamburger-btn-left">
+        <span class="hamburger-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="hamburger-label" id="hamburgerLabel">Overview</span>
+      </span>
+      <span class="hamburger-chevron" aria-hidden="true">&#9660;</span>
+    </button>
+    <div class="hamburger-menu" id="hamburgerMenu" role="menu">
+      <button class="hamburger-item active" data-tab="overview" role="menuitem">Overview</button>
+      <button class="hamburger-item" data-tab="compare" role="menuitem">Model Comparison</button>
+      <button class="hamburger-item" data-tab="releases" role="menuitem">Recent Releases</button>
+      <button class="hamburger-item" data-tab="governance" role="menuitem">Governance &amp; Environment</button>
+      <button class="hamburger-item" data-tab="adoption" role="menuitem">Corporate Adoption</button>
+      <button class="hamburger-item" data-tab="video" role="menuitem">Video Models</button>
+      <button class="hamburger-item" data-tab="audio" role="menuitem">Audio &amp; Music</button>
+      <button class="hamburger-item" data-tab="methodology" role="menuitem">Methodology &amp; Sources</button>
+    </div>
   </div>
 
   <!-- ================= OVERVIEW ================= -->
@@ -1002,20 +1081,25 @@ themeToggle.addEventListener('click', () => {
 });
 applyThemeLabel();
 
-// ---------- Tabs ----------
+// ---------- Tabs (desktop bar + tablet/mobile hamburger, kept in sync) ----------
 const tabBtns = document.querySelectorAll('.tab-btn');
+const hamburgerItems = document.querySelectorAll('.hamburger-item');
 const tabPanels = document.querySelectorAll('.tab-panel');
-tabBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    tabBtns.forEach(b => b.classList.remove('active'));
-    tabPanels.forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-    btn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
-  });
-});
+const hamburgerLabel = document.getElementById('hamburgerLabel');
 
-// ---------- Tab bar scroll fades (replaces the raw browser scrollbar) ----------
+function switchTab(tabId) {
+  tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  hamburgerItems.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  tabPanels.forEach(p => p.classList.toggle('active', p.id === 'panel-' + tabId));
+  const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+  if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+  const activeItem = document.querySelector(`.hamburger-item[data-tab="${tabId}"]`);
+  if (activeItem) hamburgerLabel.textContent = activeItem.textContent;
+}
+tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+hamburgerItems.forEach(btn => btn.addEventListener('click', () => { switchTab(btn.dataset.tab); closeHamburger(); }));
+
+// ---------- Tab bar scroll fades (desktop nav; replaces the raw browser scrollbar) ----------
 const tabsWrap = document.getElementById('tabsWrap');
 const tabsNav = document.getElementById('tabsNav');
 function updateTabFades() {
@@ -1026,6 +1110,26 @@ function updateTabFades() {
 tabsNav.addEventListener('scroll', updateTabFades, { passive: true });
 window.addEventListener('resize', updateTabFades);
 updateTabFades();
+
+// ---------- Hamburger menu (tablet & mobile, <=1024px) ----------
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const hamburgerMenu = document.getElementById('hamburgerMenu');
+function openHamburger() {
+  hamburgerMenu.classList.add('open');
+  hamburgerBtn.setAttribute('aria-expanded', 'true');
+}
+function closeHamburger() {
+  hamburgerMenu.classList.remove('open');
+  hamburgerBtn.setAttribute('aria-expanded', 'false');
+}
+hamburgerBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  hamburgerMenu.classList.contains('open') ? closeHamburger() : openHamburger();
+});
+document.addEventListener('click', (e) => {
+  if (!hamburgerMenu.contains(e.target) && e.target !== hamburgerBtn) closeHamburger();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHamburger(); });
 
 // ---------- Formatting helpers ----------
 function fmtNum(v, suffix) {

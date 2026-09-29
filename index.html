@@ -141,11 +141,30 @@
   section { margin-bottom: 32px; }
 
   /* Tabs */
+  .tabs-wrap {
+    position: relative;
+    margin-bottom: 24px;
+  }
   .tabs-nav {
     display: flex; gap: 4px; overflow-x: auto;
-    margin-bottom: 24px;
     border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
   }
+  .tabs-nav::-webkit-scrollbar { display: none; height: 0; }
+  .tab-fade {
+    position: absolute;
+    top: 0; bottom: 1px;
+    width: 28px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .tab-fade-l { left: 0; background: linear-gradient(to right, var(--surface), transparent); }
+  .tab-fade-r { right: 0; background: linear-gradient(to left, var(--surface), transparent); }
+  .tabs-wrap.can-scroll-l .tab-fade-l { opacity: 1; }
+  .tabs-wrap.can-scroll-r .tab-fade-r { opacity: 1; }
   .tab-btn {
     padding: 10px 14px;
     font-size: 13px;
@@ -158,6 +177,7 @@
     white-space: nowrap;
     font-family: inherit;
     margin-bottom: -1px;
+    flex-shrink: 0;
   }
   .tab-btn:hover { color: var(--text); }
   .tab-btn.active { color: var(--text); border-bottom-color: var(--blue); }
@@ -460,16 +480,20 @@
     </div>
   </header>
 
-  <nav class="tabs-nav" id="tabsNav">
-    <button class="tab-btn active" data-tab="overview">Overview</button>
-    <button class="tab-btn" data-tab="compare">Model Comparison</button>
-    <button class="tab-btn" data-tab="releases">Recent Releases</button>
-    <button class="tab-btn" data-tab="governance">Governance &amp; Environment</button>
-    <button class="tab-btn" data-tab="adoption">Corporate Adoption</button>
-    <button class="tab-btn" data-tab="video">Video Models</button>
-    <button class="tab-btn" data-tab="audio">Audio &amp; Music</button>
-    <button class="tab-btn" data-tab="methodology">Methodology &amp; Sources</button>
-  </nav>
+  <div class="tabs-wrap" id="tabsWrap">
+    <nav class="tabs-nav" id="tabsNav">
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="compare">Model Comparison</button>
+      <button class="tab-btn" data-tab="releases">Recent Releases</button>
+      <button class="tab-btn" data-tab="governance">Governance &amp; Environment</button>
+      <button class="tab-btn" data-tab="adoption">Corporate Adoption</button>
+      <button class="tab-btn" data-tab="video">Video Models</button>
+      <button class="tab-btn" data-tab="audio">Audio &amp; Music</button>
+      <button class="tab-btn" data-tab="methodology">Methodology &amp; Sources</button>
+    </nav>
+    <div class="tab-fade tab-fade-l" aria-hidden="true"></div>
+    <div class="tab-fade tab-fade-r" aria-hidden="true"></div>
+  </div>
 
   <!-- ================= OVERVIEW ================= -->
   <div class="tab-panel active" id="panel-overview">
@@ -987,8 +1011,21 @@ tabBtns.forEach(btn => {
     tabPanels.forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    btn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
   });
 });
+
+// ---------- Tab bar scroll fades (replaces the raw browser scrollbar) ----------
+const tabsWrap = document.getElementById('tabsWrap');
+const tabsNav = document.getElementById('tabsNav');
+function updateTabFades() {
+  const max = tabsNav.scrollWidth - tabsNav.clientWidth;
+  tabsWrap.classList.toggle('can-scroll-l', tabsNav.scrollLeft > 2);
+  tabsWrap.classList.toggle('can-scroll-r', tabsNav.scrollLeft < max - 2);
+}
+tabsNav.addEventListener('scroll', updateTabFades, { passive: true });
+window.addEventListener('resize', updateTabFades);
+updateTabFades();
 
 // ---------- Formatting helpers ----------
 function fmtNum(v, suffix) {

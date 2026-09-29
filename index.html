@@ -108,6 +108,8 @@
   .brand-mark { width: 30px; height: 30px; flex-shrink: 0; border-radius: 7px; }
   .brand-mark rect.tile { fill: #1a1a19; }
   .brand-mark rect.bar { fill: var(--blue); }
+  .wordmark { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 2px; }
+  .wordmark .accent { color: var(--blue); }
   h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
   .subtitle { color: var(--muted); font-size: 13px; }
   .snapshot { font-variant-numeric: tabular-nums; }
@@ -445,6 +447,7 @@
         <rect class="bar" x="40" y="12" width="10" height="40" rx="3"/>
       </svg>
       <div>
+        <div class="wordmark">Model<span class="accent">Score</span></div>
         <h1>LLM Benchmark Tracker</h1>
         <div class="subtitle">Snapshot date: <span class="snapshot">September 27, 2026</span></div>
       </div>
@@ -463,6 +466,8 @@
     <button class="tab-btn" data-tab="releases">Recent Releases</button>
     <button class="tab-btn" data-tab="governance">Governance &amp; Environment</button>
     <button class="tab-btn" data-tab="adoption">Corporate Adoption</button>
+    <button class="tab-btn" data-tab="video">Video Models</button>
+    <button class="tab-btn" data-tab="audio">Audio &amp; Music</button>
     <button class="tab-btn" data-tab="methodology">Methodology &amp; Sources</button>
   </nav>
 
@@ -673,6 +678,64 @@
     </section>
   </div>
 
+  <!-- ================= VIDEO MODELS ================= -->
+  <div class="tab-panel" id="panel-video">
+    <section>
+      <h2 class="section-label">AI Video Generation — Top Models</h2>
+      <div class="card">
+        <p class="disclosure-intro">Ranked by the <b>Artificial Analysis Text-to-Video Arena (With Audio)</b> &mdash; blind pairwise human votes across text-to-video, image-to-video and editing tasks, scored on an Elo-style scale (not comparable to the LLM Intelligence Index above). Because this is the "with audio" arena, the vote also reflects each clip's generated soundtrack, not visual quality alone. Price is normalized to <b>$ per minute of output video</b> for cross-model comparison; each provider actually bills by its own unit (per second, per clip, per credit), so treat this as an approximation, not each provider's literal invoice.</p>
+        <div class="tiles">
+          <div class="tile">
+            <div class="label">Top-Rated Video Model</div>
+            <div class="value">1233</div>
+            <div class="meta">Gemini Omni Flash &mdash; Google (AA Video Arena Elo)</div>
+          </div>
+          <div class="tile">
+            <div class="label">Cheapest Tracked</div>
+            <div class="value">$0.30/min</div>
+            <div class="meta">Agnes-Video-V2.0 &mdash; Sapiens AI (Elo 897, budget tier)</div>
+          </div>
+          <div class="tile">
+            <div class="label">Models Tracked</div>
+            <div class="value">36</div>
+            <div class="meta">Artificial Analysis Text-to-Video Arena, blind human votes</div>
+          </div>
+        </div>
+        <div id="videoList" style="margin-top:16px;"></div>
+        <div class="foot-star">One creator label on the source leaderboard ("SpaceXAI" for the grok-imagine-video model) appears to be a source-side mislabeling &mdash; shown here as xAI, Grok's actual developer. Elo is not zero-anchored, so models are ranked as a list here rather than drawn as length-proportional bars, which would misstate the gaps between them.</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= AUDIO & MUSIC MODELS ================= -->
+  <div class="tab-panel" id="panel-audio">
+    <section>
+      <h2 class="section-label">AI Music Generation — Top Models</h2>
+      <div class="card">
+        <p class="disclosure-intro">Ranked by the <b>Artificial Analysis Music Arena</b>, which publishes two separate blind-vote leaderboards &mdash; <b>Instrumental</b> and <b>Vocals</b> &mdash; that are not directly comparable to each other in absolute Elo terms (different rating pools). The row below is sorted by Instrumental Elo; Vocals Elo is shown alongside where the model was rated in that category. Pricing for music generation is heterogeneous: Suno and Mureka bill via monthly subscription credits rather than a clean per-song rate, so the figures shown are an approximate cost-per-song derived from each provider's own credit-to-song estimate at their entry paid tier &mdash; not an official per-unit price. ElevenLabs Music is the one provider here with a disclosed flat per-minute API rate. MusicGen (Meta) is open-weight and free to self-host.</p>
+        <div class="tiles">
+          <div class="tile">
+            <div class="label">Top Instrumental</div>
+            <div class="value">1143</div>
+            <div class="meta">Suno v6 &mdash; Suno (AA Music Arena Elo)</div>
+          </div>
+          <div class="tile">
+            <div class="label">Top Vocals</div>
+            <div class="value">1134</div>
+            <div class="meta">Suno v6 &mdash; Suno (AA Music Arena Elo)</div>
+          </div>
+          <div class="tile">
+            <div class="label">Models Tracked</div>
+            <div class="value">19</div>
+            <div class="meta">AA Music Arena &mdash; Instrumental + Vocals leaderboards combined</div>
+          </div>
+        </div>
+        <div id="musicList" style="margin-top:16px;"></div>
+        <div class="foot-star">A blank Vocals figure means the model wasn't rated in that category by AA's Music Arena, not a zero score. Cost-per-song figures are our own approximation from each provider's cheapest paid plan &mdash; see the paragraph above before quoting them as an official price.</div>
+      </div>
+    </section>
+  </div>
+
   <!-- ================= METHODOLOGY & SOURCES ================= -->
   <div class="tab-panel" id="panel-methodology">
     <section>
@@ -693,6 +756,8 @@
           <li><b>The Best Value ranking and Efficient Frontier chart are our own calculations, not a cited third-party metric.</b> Both divide the AA Index by a 3:1-weighted blended price we compute from the $/1M columns. They only include the 9 of 19 models with both an index score and confirmed split pricing — narrower coverage than the main table.</li>
           <li><b>Tracking history is one snapshot deep.</b> Week-over-week deltas started this refresh cycle; a real trend line needs several more weekly snapshots to be meaningful. See the Tracking History card on the Overview tab.</li>
           <li><b>There is no per-model ESG, green, or ethics score — anywhere.</b> We looked. No tracker rates individual model versions on environmental or ethical grounds the way Artificial Analysis rates intelligence. The Governance tab substitutes real, cited, company-level ratings rather than an invented per-model number. Treat SINK's scores as lower-confidence than FMTI's; several labs aren't assessed by either index, and a handful of FMTI's exact company scores couldn't be extracted from the source excerpt — those are shown as directional findings (marked *) rather than numbers we didn't actually see.</li>
+          <li><b>Video and Audio tabs use a different scoring system than the LLM tables above — don't compare the numbers across tabs.</b> Both are Elo-style ratings from Artificial Analysis's blind-vote arenas (Video, and Music's Instrumental/Vocals), not the 0–65 Intelligence Index used for language models — a video Elo of 1233 and an LLM index of 58 aren't on the same scale and can't be ranked against each other. We deliberately skipped a length-proportional bar chart for these two tabs: Elo has no meaningful zero point, so a bar chart would either mislead (truncated axis) or flatten real gaps between models (zero-based axis) — a plain ranked list avoids both.</li>
+          <li><b>Video and music pricing are approximations, not each provider's literal bill.</b> Video prices are normalized to $/minute of output regardless of a provider's native billing unit (per second, per clip, per credit). Most music providers bill via subscription credits rather than a per-song rate; the cost-per-song figures shown are derived from each provider's own credit-to-song estimate at their cheapest paid tier, not an official unit price. Where no public pricing was found (several music models, two video models marked "coming soon"), the cell is blank rather than guessed.</li>
         </ul>
       </div>
     </section>
@@ -795,6 +860,76 @@ const sources = [
   { title: "OpenRouter — Model rankings by token usage", url: "https://openrouter.ai/rankings" },
   { title: "TechJack Solutions — EU AI Act systemic-risk models in scope (citing Epoch AI, Apr 2026)", url: "https://techjacksolutions.com/ai-brief/eu-ai-act-systemic-risk-what-the-12-models-now-in-scope-actu/" },
   { title: "EU Digital Strategy — Signatory Taskforce of the GPAI Code of Practice", url: "https://digital-strategy.ec.europa.eu/en/policies/signatory-taskforce-gpai-code-practice" },
+  { title: "Artificial Analysis — Text-to-Video Leaderboard (With Audio)", url: "https://artificialanalysis.ai/video/leaderboard/text-to-video" },
+  { title: "llm-stats.com — Best AI for Video Creation leaderboard", url: "https://llm-stats.com/leaderboards/best-ai-for-video-creation" },
+  { title: "Artificial Analysis — Music Arena, Instrumental leaderboard", url: "https://artificialanalysis.ai/music/leaderboard/instrumental" },
+  { title: "Artificial Analysis — Music Arena, Vocals leaderboard", url: "https://artificialanalysis.ai/music/leaderboard/vocals" },
+  { title: "ElevenLabs — official API pricing (Music: $0.64/min)", url: "https://elevenlabs.io/pricing/api" },
+  { title: "TechJack Solutions — Suno pricing plans", url: "https://techjacksolutions.com/ai-tools/suno/suno-pricing/" },
+  { title: "PriceMyAI — Mureka pricing plans", url: "https://pricemyai.com/pricing/mureka/" },
+];
+
+// ---------- Video generation models (Artificial Analysis Video Arena, with audio) ----------
+const videoModels = [
+  { model: "Gemini Omni Flash", lab: "Google", elo: 1233, price: 6.00 },
+  { model: "Wan 3.0", lab: "Alibaba", elo: 1229, price: 12.00 },
+  { model: "MiniMax H3 Max", lab: "MiniMax (via Fal)", elo: 1227, price: 2.40 },
+  { model: "MiniMax H3", lab: "MiniMax", elo: 1220, price: 7.80 },
+  { model: "Dreamina Seedance 2.0 720p", lab: "ByteDance Seed", elo: 1210, price: 9.07 },
+  { model: "MAGI-2 Preview", lab: "Sand.ai", elo: 1156, price: null },
+  { model: "Wan2.7-260612", lab: "Alibaba", elo: 1149, price: 9.00 },
+  { model: "HappyHorse-1.1", lab: "Alibaba-ATH", elo: 1147, price: 10.80 },
+  { model: "HappyHorse-1.0", lab: "Alibaba-ATH", elo: 1119, price: 14.40 },
+  { model: "Wan 2.7", lab: "Alibaba", elo: 1098, price: 9.00 },
+  { model: "SkyReels V4", lab: "Skywork AI", elo: 1095, price: 21.00 },
+  { model: "Kling 3.0 1080p Pro", lab: "KlingAI", elo: 1095, price: 20.16 },
+  { model: "Kling 3.0 720p Standard", lab: "KlingAI", elo: 1089, price: 15.12 },
+  { model: "Veo 3.1", lab: "Google", elo: 1088, price: 24.00 },
+  { model: "Veo 3.1 Fast", lab: "Google", elo: 1085, price: 7.20 },
+  { model: "Veo 3.1 Lite", lab: "Google", elo: 1083, price: 4.80 },
+  { model: "Sora 2 (December)", lab: "OpenAI", elo: 1083, price: 6.00 },
+  { model: "Kling 3.0 Omni 720p Standard", lab: "KlingAI", elo: 1082, price: 13.44 },
+  { model: "Vidu Q3 Pro", lab: "Vidu", elo: 1078, price: 7.20 },
+  { model: "Agnes-Video-2.5", lab: "Sapiens AI", elo: 1076, price: 1.50 },
+  { model: "PixVerse V6", lab: "PixVerse", elo: 1076, price: 6.90 },
+  { model: "Kling 3.0 Omni 1080p Pro", lab: "KlingAI", elo: 1075, price: 16.80 },
+  { model: "grok-imagine-video", lab: "xAI", elo: 1065, price: 4.20 },
+  { model: "Sora 2 Pro", lab: "OpenAI", elo: 1059, price: 30.00 },
+  { model: "LTX-2.5 Fast", lab: "Lightricks", elo: 1055, price: 7.80 },
+  { model: "LTX-2.5 Pro", lab: "Lightricks", elo: 1053, price: 10.20 },
+  { model: "Wan 2.6", lab: "Alibaba", elo: 1030, price: 9.00 },
+  { model: "Vidu Q3 Turbo", lab: "Vidu", elo: 1025, price: 3.90 },
+  { model: "Seedance 1.5 pro", lab: "ByteDance Seed", elo: 1000, price: 11.86 },
+  { model: "LTX-2.3 Fast", lab: "Lightricks", elo: 975, price: 2.40 },
+  { model: "Kling 2.6 Pro (January)", lab: "KlingAI", elo: 974, price: 8.40 },
+  { model: "LTX-2.3 Pro", lab: "Lightricks", elo: 958, price: 4.80 },
+  { model: "PixVerse V5.6", lab: "PixVerse", elo: 952, price: null },
+  { model: "LTX-2 Fast", lab: "Lightricks", elo: 924, price: 2.40 },
+  { model: "LTX-2 Pro", lab: "Lightricks", elo: 905, price: 3.60 },
+  { model: "Agnes-Video-V2.0", lab: "Sapiens AI", elo: 897, price: 0.30 },
+];
+
+// ---------- Music generation models (Artificial Analysis Music Arena) ----------
+const musicModels = [
+  { model: "Suno v6", lab: "Suno", instrumental: 1143, vocals: 1134, price: "~$0.02/song (Pro plan, $10/mo)" },
+  { model: "Suno v6-mini", lab: "Suno", instrumental: 1112, vocals: 1110, price: "~$0.02/song (Pro plan, $10/mo)" },
+  { model: "Mureka V9.5", lab: "Mureka", instrumental: 1083, vocals: 1098, price: "~$0.02/song (Basic plan, $8/mo)" },
+  { model: "Lyria 3 Pro", lab: "Google", instrumental: 1082, vocals: 1043, price: null },
+  { model: "Mureka V9", lab: "Mureka", instrumental: 1081, vocals: 1049, price: "~$0.02/song (Basic plan, $8/mo)" },
+  { model: "Lyria 3.5", lab: "Google", instrumental: 1081, vocals: 1045, price: null },
+  { model: "Eleven Music", lab: "ElevenLabs", instrumental: 1024, vocals: 997, price: "$0.64/min" },
+  { model: "Stable Audio 3 Large", lab: "Stability.ai", instrumental: 1019, vocals: null, price: null },
+  { model: "Eleven Music v2", lab: "ElevenLabs", instrumental: 1012, vocals: 997, price: "$0.64/min" },
+  { model: "MiniMax Music 2.5+", lab: "MiniMax", instrumental: 1010, vocals: 984, price: null },
+  { model: "Eleven Music v2.5", lab: "ElevenLabs", instrumental: 1006, vocals: 1010, price: "$0.64/min" },
+  { model: "MiniMax Music 2.6", lab: "MiniMax", instrumental: 1005, vocals: 999, price: null },
+  { model: "Stable Audio 3 Medium", lab: "Stability.ai", instrumental: 1000, vocals: null, price: null },
+  { model: "MiniMax Music 3.0", lab: "MiniMax", instrumental: 1000, vocals: 1000, price: null },
+  { model: "Melodia v3", lab: "Sonauto", instrumental: 988, vocals: 974, price: null },
+  { model: "Stable Audio 2.5", lab: "Stability.ai", instrumental: 987, vocals: null, price: null },
+  { model: "Stable Audio 3 Small", lab: "Stability.ai", instrumental: 953, vocals: null, price: null },
+  { model: "Lyria 2", lab: "Google", instrumental: 937, vocals: null, price: null },
+  { model: "MusicGen", lab: "Meta", instrumental: 882, vocals: null, price: "Free (open-weight, self-hosted)" },
 ];
 
 // ---------- Lab-level transparency & environmental disclosure ----------
@@ -1219,6 +1354,37 @@ usageTop.forEach(u => {
     <div class="usage-tokens">${u.tokens}<br><span class="usage-meta">${u.change}</span></div>
   `;
   usageEl.appendChild(row);
+});
+
+// ---------- Video models list ----------
+const videoListEl = document.getElementById('videoList');
+[...videoModels].sort((a, b) => b.elo - a.elo).forEach((m, i) => {
+  const row = document.createElement('div');
+  row.className = 'value-row';
+  const priceStr = m.price === null
+    ? '<span class="dash">—</span>'
+    : `$${m.price.toFixed(2)}/min`;
+  row.innerHTML = `
+    <div class="value-rank">${i + 1}</div>
+    <div class="value-name">${m.model}<span class="value-lab">${m.lab} &middot; ${priceStr}</span></div>
+    <div class="value-score">${m.elo}</div>
+  `;
+  videoListEl.appendChild(row);
+});
+
+// ---------- Music models list ----------
+const musicListEl = document.getElementById('musicList');
+[...musicModels].sort((a, b) => b.instrumental - a.instrumental).forEach((m, i) => {
+  const row = document.createElement('div');
+  row.className = 'value-row';
+  const vocalsStr = m.vocals === null ? '<span class="dash">—</span>' : m.vocals;
+  const priceStr = m.price === null ? '<span class="dash">—</span>' : m.price;
+  row.innerHTML = `
+    <div class="value-rank">${i + 1}</div>
+    <div class="value-name">${m.model}<span class="value-lab">${m.lab} &middot; Vocals ${vocalsStr} &middot; ${priceStr}</span></div>
+    <div class="value-score">${m.instrumental}</div>
+  `;
+  musicListEl.appendChild(row);
 });
 
 // ---------- Sources ----------

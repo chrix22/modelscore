@@ -23,10 +23,17 @@ Settings → Pages → Deploy from branch → `main` / root. The dashboard will 
 
 ## SEO
 
-- `index.html` carries a descriptive `<title>`, meta description, canonical URL (`https://modelscore.net/`), Open Graph / Twitter Card tags, an inline SVG favicon, and JSON-LD `Dataset` structured data.
+- `index.html` carries a descriptive `<title>`, meta description, canonical URL (`https://modelscore.net/`), Open Graph / Twitter Card tags, and JSON-LD `Dataset` structured data.
 - `og-image.png` (1200×630) is the social-share preview image — upload it alongside `index.html` at the site root so `og:image`/`twitter:image` resolve.
 - `robots.txt` and `sitemap.xml` — upload both at the site root too. `sitemap.xml`'s `<lastmod>` should be bumped on each weekly refresh.
 - Section headers use real `<h2>` elements (not just styled `<div>`s) for a proper heading outline.
+
+## Brand assets
+
+- `icon.svg` — the master favicon mark (rounded dark tile, three ascending blue bars). `index.html` references it directly as `/icon.svg`.
+- `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`, `favicon-192x192.png`, `favicon-512x512.png`, `apple-touch-icon.png` — rendered from `icon.svg`; upload all of them at the site root alongside `index.html` (the `<link rel="icon">` / `<link rel="apple-touch-icon">` tags in `<head>` expect them there).
+- `logo-light-bg.png` / `logo-dark-bg.png` — the horizontal "ModelScore" lockup (icon + wordmark), transparent background, for use on light or dark surfaces respectively (README badges, social profiles, slides). Not referenced by `index.html` itself.
+- Regenerate any of these only if the brand mark or palette changes — otherwise keep reusing the same files on every refresh.
 
 ## Data integrity notes
 
